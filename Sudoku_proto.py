@@ -53,9 +53,19 @@ def test_val(board, row, col, val):
     
     return True
 def print_board(board):
-    fill_in(board, find_blank(board)[0], find_blank(board)[1])
-    for i in range(0,9):
-        print(board[i])
+    for i in range(len(board)):
+        
+        if i % 3 == 0 and i != 0:
+            print("- - - | - - - | - - -")
+        for j in range(len(board[i])):
+            if j % 3 == 0 and j != 0:
+                print("| ", end="")
+                
+            if j == len(board[i])-1:
+                print(str(board[i][j]))
+            else:
+                print(str(board[i][j]) + " ", end="")
+
 
 for i in range(0,9):
     print(demoboard[i])
