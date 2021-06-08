@@ -52,9 +52,13 @@ def test_val(board, row, col, val):
                 return False
     
     return True
+
+def solve(board):
+    fill_in(board, find_blank(board)[0], find_blank(board)[1])
+    return board
+
 def print_board(board):
     for i in range(len(board)):
-        
         if i % 3 == 0 and i != 0:
             print("- - - | - - - | - - -")
         for j in range(len(board[i])):
@@ -67,7 +71,8 @@ def print_board(board):
                 print(str(board[i][j]) + " ", end="")
 
 
-for i in range(0,9):
-    print(demoboard[i])
-print("Before : After")
 print_board(demoboard)
+print("Before : After")
+solve(demoboard)
+print_board(demoboard)
+
