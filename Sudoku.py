@@ -2,7 +2,10 @@ import tkinter as ui
 import time
 import pygame as pg
 
-demoboard = [
+
+class Grid:
+    
+    demoboard = [
         [7, 8, 0, 4, 0, 0, 1, 2, 0],
         [6, 0, 0, 0, 7, 5, 0, 0, 9],
         [0, 0, 0, 6, 0, 1, 0, 7, 8],
@@ -14,21 +17,40 @@ demoboard = [
         [0, 4, 9, 2, 0, 6, 0, 0, 7]
     ]
 
-#class Grid:
-#    def __init__(self, row, col, wid)
+    def __init__(self, rows, cols, width, height):
+        self.rows = rows
+        self.cols = cols
+        self.cubes = [[Cube(self.demoboard[i][j], i, j, width, height) for j in range(cols)] for i in range(rows)]
+        self.width = width
+        self.height = height
+        self.model = None
+        self.selected = None    #model is used as internal demo for testing
+    
+    def sketch(self, value):
+        row, col = self.selected
+        self.cubes[row][col].set(value)
 
+    def draw(self, window):
+        gap = self.width / 9
+        for i in range(self.rows + 1):
+            if i % 3 == 0 and i != 0:
+                thick = 4
+            else:
+                thick = 1
+            pg.draw.line(window, (0,0,0), (0, i*gap), (self.width, i*gap), thick)
+            pg.draw.line(window, (0,0,0), (i*gap, 0), (i*gap, self.height), thick)
+        
+        for i in range(self.rows):
+            for j in range(self.cols):
+                self.cubes[i][j].draw(window)
 
 class Cube:
-    def __init__(self, row, col, width, height, value, permanent_val):
+    def __init__(self, value, row, col, width, height):
         self.row = row
         self.col = col
         self.width = width
         self.height = height
-        self.permanent_val = permanent_val
-        if permanent_val != 0:
-            self.value = permanent_val
-        else:
-            self.value = value
+        self.value = value
         self.temp = 0
         self.selected = False
         self.cube_size = width / 9
@@ -50,4 +72,17 @@ class Cube:
             pg.draw.rect(playboard, (255,0,0), (x, y, self.cube_size, self.cube_size))
 
 
+def redraw_window(window, demoboard):
+    window.fill((255,255,255))
+    demoboard.draw(window)
 
+def main():
+    window = pg.display.set_mode((540,600))
+    pg.display.set_caption("Demo")
+    board = Grid(9,9,540,540)
+    #key = None
+    run = True
+    while run:
+        redraw_window(window, board)
+
+main()
