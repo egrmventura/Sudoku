@@ -17,7 +17,7 @@ class Grid:
         [0, 4, 9, 2, 0, 6, 0, 0, 7]
     ]
 
-    def __init__(self, rows, cols, width, height, window):
+    def __init__(self, rows, cols, width, height, win):
         self.rows = rows
         self.cols = cols
         self.cubes = [[Cube(self.demoboard[i][j], i, j, width, height) for j in range(cols)] for i in range(rows)]
@@ -25,7 +25,7 @@ class Grid:
         self.height = height
         self.model = None
         self.selected = None    #model is used as internal demo for testing
-        self.window = window
+        self.win = win
     
     def sketch(self, value):
         row, col = self.selected
@@ -38,12 +38,12 @@ class Grid:
                 thick = 4
             else:
                 thick = 1
-            pg.draw.line(self.window, (0,0,0), (0, i*gap), (self.width, i*gap), thick)
-            pg.draw.line(self.window, (0,0,0), (i*gap, 0), (i*gap, self.height), thick)
+            pg.draw.line(self.win, (0,0,0), (0, i*gap), (self.width, i*gap), thick)
+            pg.draw.line(self.win, (0,0,0), (i*gap, 0), (i*gap, self.width), thick)
         
         for i in range(self.rows):
             for j in range(self.cols):
-                self.cubes[i][j].draw(self.window)
+                self.cubes[i][j].draw(self.win)
 
 class Cube:
     def __init__(self, value, row, col, width, height):
@@ -69,8 +69,8 @@ class Cube:
             text = fnt.render(str(self.value), True, (0,0,0))
             playboard.blit(text, (x + (self.cube_size/2 - text.get_width()/2), y + (self.cube_size/2 - text.get_height()/2)))
 
-        if self.selected:
-            pg.draw.rect(playboard, (255,0,0), (x, y, self.cube_size, self.cube_size))
+        #if self.selected:
+        #    pg.draw.rect(playboard, (255,0,0), (x, y, self.cube_size, self.cube_size))
 
 
 def redraw_window(window, demoboard):
@@ -78,12 +78,12 @@ def redraw_window(window, demoboard):
     demoboard.draw()
 
 def main():
-    window = pg.display.set_mode((540,600))
+    win = pg.display.set_mode((540,600))
     pg.display.set_caption("Demo")
-    board = Grid(9,9,540,540, window)
+    board = Grid(9,9,540,540, win)
     #key = None
     run = True
     while run:
-        redraw_window(window, board)
-
+        redraw_window(win, board)
+    
 main()
