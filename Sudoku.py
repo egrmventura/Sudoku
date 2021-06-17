@@ -69,8 +69,8 @@ class Cube:
             text = fnt.render(str(self.value), True, (0,0,0))
             playboard.blit(text, (x + (self.cube_size/2 - text.get_width()/2), y + (self.cube_size/2 - text.get_height()/2)))
 
-        #if self.selected:
-        #    pg.draw.rect(playboard, (255,0,0), (x, y, self.cube_size, self.cube_size))
+        if self.selected:
+            pg.draw.rect(playboard, (255,0,0), (x, y, self.cube_size, self.cube_size), 3)
 
 
 def redraw_window(window, demoboard):
