@@ -1,3 +1,4 @@
+#from Sudoku_proto import find_blank
 import tkinter as ui
 import time
 import pygame as pg
@@ -23,10 +24,14 @@ class Grid:
         self.cubes = [[Cube(self.demoboard[i][j], i, j, width, height) for j in range(cols)] for i in range(rows)]
         self.width = width
         self.height = height
-        self.model = None
+        self.test_board = None
+        self.update_test()
         self.selected = None    #model is used as internal demo for testing
         self.win = win
     
+    def update_test(self):
+        self.test_board = [[self.cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
+
     def sketch(self, value):
         row, col = self.selected
         self.cubes[row][col].set(value)
@@ -44,6 +49,28 @@ class Grid:
         for i in range(self.rows):
             for j in range(self.cols):
                 self.cubes[i][j].draw(self.win)
+    
+    def solve(self):
+        test_cube = find_empty(self.test_board)
+        if not test_cube:
+            return True
+        row, col = test_cube
+        for num in range(1, 10):
+            if val_test(self.test_board, num, test_cube):
+                self.test_board[row][col] = num
+                if self.solve():
+                    return True
+                self.test_board[row][col] = 0
+
+        return False
+
+    def update_board(self): #temp test for solve display
+        for i in range(9):
+            for j in range(9):
+                self.cubes[i][j].value = self.test_board[i][j]
+
+
+    
 
 class Cube:
     def __init__(self, value, row, col, width, height):
@@ -77,13 +104,49 @@ def redraw_window(window, demoboard):
     window.fill((255,255,255))
     demoboard.draw()
 
+def find_empty(board):
+    for i in range(len(board)):
+        for j in range(len(board[0])):
+            if board[i][j] == 0:
+                return (i, j)   #row, col of empty
+
+def val_test(board, num, pos):
+    row = pos[0]
+    col = pos[1]
+    row_sect = row // 3
+    col_sect = col // 3
+    for i in range(len(board[0])):  #check along row
+        if board[row][i] == num and i != col:
+            return False
+    
+    for i in range(len(board)):    #check along column
+        if board[i][col] == num and i != row:
+            return False
+    
+    for i in range(row_sect * 3, (row_sect * 3) + 3):
+        for j in range(col_sect * 3, (col_sect * 3) +3):
+            if board[i][j] == num and i != row and j != col:
+                return False
+    
+    return True #passed all tests
+
 def main():
     win = pg.display.set_mode((540,600))
     pg.display.set_caption("Demo")
     board = Grid(9,9,540,540, win)
-    #key = None
+    key = None
     run = True
     while run:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                run = False
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_SPACE:
+                    board.solve()
+                    board.update_board()
+
+
         redraw_window(win, board)
+        pg.display.flip()
     
 main()

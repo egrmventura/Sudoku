@@ -3,15 +3,15 @@ pg.font.init()
 
 class Grid():
     dboard = [
-        [0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0]
+        [7, 8, 0, 4, 0, 0, 1, 2, 0],
+        [6, 0, 0, 0, 7, 5, 0, 0, 9],
+        [0, 0, 0, 6, 0, 1, 0, 7, 8],
+        [0, 0, 7, 0, 4, 0, 2, 6, 0],
+        [0, 0, 1, 0, 5, 0, 9, 3, 0],
+        [9, 0, 4, 0, 6, 0, 0, 0, 5],
+        [0, 7, 0, 3, 0, 0, 0, 1, 2],
+        [1, 2, 0, 0, 0, 7, 4, 0, 0],
+        [0, 4, 9, 2, 0, 6, 0, 0, 7]
     ]
     #rows = 9
     #cols = 9
@@ -20,17 +20,17 @@ class Grid():
         self.height = height
         self.rows = rows
         self.cols = cols
-        self.gap = min(width/cols, height/rows)
         self.win = win
 
     def draw_grid(self):
+        gap = min(self.width/self.cols, self.height/self.rows)
         for i in range(min(self.rows,self.cols)+1):
             if i % 3 == 0:
                 thick = 4
             else:
                 thick = 1
-            pg.draw.line(self.win, (0,0,0), (0,i * self.gap), (self.width, i * self.gap), thick)
-            pg.draw.line(self.win, (0,0,0), (i * self.gap, 0), (i * self.gap, self.height), thick)
+            pg.draw.line(self.win, (0,0,0), (0,i * gap), (self.width, i * gap), thick)
+            pg.draw.line(self.win, (0,0,0), (i * gap, 0), (i * gap, self.height), thick)
 
 
 
