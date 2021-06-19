@@ -26,11 +26,16 @@ class Grid:
         self.height = height
         self.test_board = None
         self.update_test()
+        self.backtest_board = None
+        self.update_backtest()
         self.selected = None    #model is used as internal demo for testing
         self.win = win
     
     def update_test(self):
         self.test_board = [[self.cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
+
+    def update_backtest(self):
+        self.backtest_board = [[self.cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
 
     def sketch(self, value):
         row, col = self.selected
@@ -56,6 +61,20 @@ class Grid:
             return True
         row, col = test_cube
         for num in range(1, 10):
+            if val_test(self.test_board, num, test_cube):
+                self.test_board[row][col] = num
+                if self.solve():
+                    return True
+                self.test_board[row][col] = 0
+
+        return False
+
+    def backcheck_solve(self):
+        test_cube = find_empty(self.test_board)
+        if not test_cube:
+            return True
+        row, col = test_cube
+        for num in range(9, 0, -1):
             if val_test(self.test_board, num, test_cube):
                 self.test_board[row][col] = num
                 if self.solve():
