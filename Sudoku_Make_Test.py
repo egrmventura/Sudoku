@@ -119,12 +119,15 @@ class Cube:
         self.selected = False
         self.cube_size = width / 9
 
-    def draw(self, playboard):
+    def draw(self, playboard, testnum):
         fnt = pg.font.SysFont("comic sans", 46)
         
         x = self.col * self.cube_size
-        y = self.row * self.cube_size
-
+        if testnum == 0:
+            y = self.row * self.cube_size
+        else:
+            y = self.height - self.width + (self.row * self.cube_size)
+#Reset this layout for showing upper and lower tests
         if self.value == 0 and self.temp != 0:
             text = fnt.render(str(self.temp), True, (128,128,128))
             playboard.blit(text, (x+5, y+5))
@@ -167,7 +170,7 @@ def val_test(board, num, pos):
     return True #passed all tests
 
 def main():
-    win = pg.display.set_mode((540,600))
+    win = pg.display.set_mode((540,1140))
     pg.display.set_caption("Demo")
     board = Grid(9,9,540,540, win)
     key = None

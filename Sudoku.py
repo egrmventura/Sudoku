@@ -5,7 +5,7 @@ import pygame as pg
 pg.font.init()
 
 class Grid:
-    
+    '''
     demoboard = [
         [7, 8, 0, 4, 0, 0, 1, 2, 0],
         [6, 0, 0, 0, 7, 5, 0, 0, 9],
@@ -16,6 +16,19 @@ class Grid:
         [0, 7, 0, 3, 0, 0, 0, 1, 2],
         [1, 2, 0, 0, 0, 7, 4, 0, 0],
         [0, 4, 9, 2, 0, 6, 0, 0, 7]
+    ]'''
+
+
+    demoboard = [
+        [0, 0, 0, 4, 0, 0, 1, 2, 0],
+        [6, 0, 0, 0, 0, 5, 0, 0, 9],
+        [0, 0, 0, 6, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 4, 0, 2, 6, 0],
+        [0, 0, 1, 0, 5, 0, 9, 3, 0],
+        [9, 0, 4, 0, 6, 0, 0, 0, 5],
+        [0, 0, 0, 3, 0, 0, 0, 1, 2],
+        [1, 2, 0, 0, 0, 0, 4, 0, 0],
+        [0, 4, 9, 2, 0, 6, 0, 0, 0]
     ]
 
     def __init__(self, rows, cols, width, height, win):
@@ -26,31 +39,27 @@ class Grid:
         self.height = height
         self.test_board = None
         self.update_test()
-        self.backtest_board = None
-        self.update_backtest()
         self.selected = None    #model is used as internal demo for testing
         self.win = win
     
     def update_test(self):
         self.test_board = [[self.cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
 
-    def update_backtest(self):
-        self.backtest_board = [[self.cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
-
     def sketch(self, value):
         row, col = self.selected
         self.cubes[row][col].set(value)
 
-    def draw(self):
+    def draw(self, testnum):
         gap = self.width / 9
         for i in range(self.rows + 1):
             if i % 3 == 0 and i != 0:
                 thick = 4
             else:
                 thick = 1
+            
             pg.draw.line(self.win, (0,0,0), (0, i*gap), (self.width, i*gap), thick)
             pg.draw.line(self.win, (0,0,0), (i*gap, 0), (i*gap, self.width), thick)
-        
+            
         for i in range(self.rows):
             for j in range(self.cols):
                 self.cubes[i][j].draw(self.win)
@@ -61,20 +70,6 @@ class Grid:
             return True
         row, col = test_cube
         for num in range(1, 10):
-            if val_test(self.test_board, num, test_cube):
-                self.test_board[row][col] = num
-                if self.solve():
-                    return True
-                self.test_board[row][col] = 0
-
-        return False
-
-    def backcheck_solve(self):
-        test_cube = find_empty(self.test_board)
-        if not test_cube:
-            return True
-        row, col = test_cube
-        for num in range(9, 0, -1):
             if val_test(self.test_board, num, test_cube):
                 self.test_board[row][col] = num
                 if self.solve():
