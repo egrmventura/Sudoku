@@ -49,7 +49,7 @@ class Grid:
         row, col = self.selected
         self.cubes[row][col].set(value)
 
-    def draw(self, testnum):
+    def draw(self):
         gap = self.width / 9
         for i in range(self.rows + 1):
             if i % 3 == 0 and i != 0:
