@@ -60,12 +60,19 @@ class Grid:
     def draw(self):
         gap = self.width / 9
         for i in range(self.rows + 1):
-            if i % 3 == 0 and i != 0:
-                thick = 4
+            if i % 3 == 0: 
+                if self.section == 0 and i == 0:
+                    thick = 1
+                #elif i != 9 and self.section != 0:
+                #    thick = 1
+                else:
+                    thick = 4
             else:
                 thick = 1
             pg.draw.line(self.win, (0,0,0), (0, i*gap), (self.width, i*gap), thick)
             pg.draw.line(self.win, (0,0,0), (i*gap, 0), (i*gap, self.width), thick)
+            #print("height " + str(self.height))
+            #print("y at " + str(((self.height - self.width) + (i*gap))))
             pg.draw.line(self.win, (0,0,0), (0, ((self.height - self.width) + (i*gap))), (self.width, ((self.height - self.width) + (i*gap))), thick)
             pg.draw.line(self.win, (0,0,0), (i* gap, self.height - self.width), (i*gap, self.height), thick)
     
@@ -129,8 +136,10 @@ class Cube:
         x = self.col * self.cube_size
         if self.section == 0:
             y = self.row * self.cube_size
+            print("y at " + str(y) + " +section " + str(self.section))
         else:
             y = self.height - self.width + (self.row * self.cube_size)
+            print("y at " + str(y) + " +section " + str(self.section))
 #Reset this layout for showing upper and lower tests
         if self.value == 0 and self.temp != 0:
             text = fnt.render(str(self.temp), True, (128,128,128))
@@ -146,6 +155,7 @@ class Cube:
 def redraw_window(window, demoboard):
     window.fill((255,255,255))
     demoboard.draw()
+    #add section number to the grid.draw()?
 
 def find_empty(board):
     for i in range(len(board)):
@@ -176,8 +186,8 @@ def val_test(board, num, pos):
 def main():
     win = pg.display.set_mode((360,750))
     pg.display.set_caption("Demo")
-    board = Grid(9,9,360,360, win, 0)
-    board_backup = Grid(9,9,360,360, win, 1)
+    board = Grid(9,9,360,750, win, 0)
+    board_backup = Grid(9,9,360,750, win, 1)
     key = None
     run = True
     while run:
