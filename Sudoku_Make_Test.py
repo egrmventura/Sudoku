@@ -35,8 +35,8 @@ class Grid:
         self.rows = rows
         self.cols = cols
         self.section = section
-        self.cubes = [[Cube(self.demoboard[i][j], i, j, width, height, self.section) for j in range(cols)] for i in range(rows)]
-        self.back_cubes = [[Cube(self.demoboard[i][j], i, j, width, height, self.section) for j in range(cols)] for i in range(rows)]
+        self.cubes = [[Cube(self.demoboard[i][j], i, j, width, height, 0) for j in range(cols)] for i in range(rows)]
+        self.back_cubes = [[Cube(self.demoboard[i][j], i, j, width, height, 1) for j in range(cols)] for i in range(rows)]
         self.width = width
         self.height = height
         self.test_board = None
@@ -78,6 +78,7 @@ class Grid:
     
         for i in range(self.rows):
             for j in range(self.cols):
+                a = 0
                 self.cubes[i][j].draw(self.win)
                 self.back_cubes[i][j].draw(self.win)
     
@@ -96,19 +97,22 @@ class Grid:
         return False
 
     def backcheck_solve(self):
-        test_cube = find_empty(self.test_board)
+        test_cube = find_empty(self.backtest_board)
         if not test_cube:
             return True
         row, col = test_cube
         for num in range(9, 0, -1):
-            if val_test(self.test_board, num, test_cube):
-                self.test_board[row][col] = num
-                if self.solve():
+            if val_test(self.backtest_board, num, test_cube):
+                self.backtest_board[row][col] = num
+                if self.backcheck_solve():
                     return True
-                self.test_board[row][col] = 0
+                self.backtest_board[row][col] = 0
 
         return False
 
+    #def GUI_solve(self):
+
+    
     def update_board(self): #temp test for solve display
         for i in range(9):
             for j in range(9):
@@ -128,23 +132,21 @@ class Cube:
         self.temp = 0
         self.selected = False
         self.cube_size = width / 9
+        self.xzero = 0
+        self.yzero = 0 if section == 0 else self.height - self.width
         self.section = section
 
     def draw(self, playboard):
         fnt = pg.font.SysFont("comic sans", 30)
         
-        x = self.col * self.cube_size
-        if self.section == 0:
-            y = self.row * self.cube_size
-            print("y at " + str(y) + " +section " + str(self.section))
-        else:
-            y = self.height - self.width + (self.row * self.cube_size)
-            print("y at " + str(y) + " +section " + str(self.section))
+        x = self.xzero + (self.col * self.cube_size)
+        y = self.yzero + (self.row * self.cube_size)
+        
 #Reset this layout for showing upper and lower tests
         if self.value == 0 and self.temp != 0:
             text = fnt.render(str(self.temp), True, (128,128,128))
             playboard.blit(text, (x+3, y+3))
-        else:
+        elif self.value != 0:
             text = fnt.render(str(self.value), True, (0,0,0))
             playboard.blit(text, (x + (self.cube_size/2 - text.get_width()/2), y + (self.cube_size/2 - text.get_height()/2)))
 
@@ -156,6 +158,7 @@ def redraw_window(window, demoboard):
     window.fill((255,255,255))
     demoboard.draw()
     #add section number to the grid.draw()?
+
 
 def find_empty(board):
     for i in range(len(board)):
@@ -187,7 +190,7 @@ def main():
     win = pg.display.set_mode((360,750))
     pg.display.set_caption("Demo")
     board = Grid(9,9,360,750, win, 0)
-    board_backup = Grid(9,9,360,750, win, 1)
+    #board_backup = Grid(9,9,360,750, win, 1)
     key = None
     run = True
     while run:
@@ -197,13 +200,14 @@ def main():
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
                     board.solve()
+                    board.backcheck_solve()
                     board.update_board()
-                    board_backup.backcheck_solve()
-                    board.update_backtest()
+                    
+                    #board.update_backtest()
 
 
         redraw_window(win, board)
-        redraw_window(win, board_backup)
+        #redraw_window(win, board_backup)
         pg.display.flip()
     
 main()
