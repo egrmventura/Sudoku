@@ -1,5 +1,5 @@
 #from Sudoku_proto import find_blank
-import tkinter as ui
+from multiprocessing import pool
 import time
 import pygame as pg
 pg.font.init()
@@ -45,6 +45,8 @@ class Grid:
         self.update_backtest()
         self.selected = None    #model is used as internal demo for testing
         self.win = win
+        self.step_0 = 0
+        self.step_1 = 0
     
     def update_test(self):
         self.test_board = [[self.cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
@@ -110,16 +112,30 @@ class Grid:
 
         return False
 
-    #def GUI_solve(self):
-
-    
+    def GUI_solve(self):
+        test_cube = find_empty(self.test_board)
+        #backtest_cube = find_empty(self.backtest_board)
+        #Forward test and backward test finished
+        if not test_cube: # and not backtest_cube:
+            return True
+        #Backward test finished
+        row, col = test_cube
+        for num in range(1, 10):
+            if val_test(self.test_board, num, test_cube):
+                self.test_board[row][col] = num
+                self.cubes[row][col].set(num)
+                #self.cubes[row][col].draw_change
+'''        
+   Try having 2 sepearte def for GUI Solve but reference A to B at the next process 
+'''
     def update_board(self): #temp test for solve display
         for i in range(9):
             for j in range(9):
                 self.cubes[i][j].value = self.test_board[i][j]
                 self.back_cubes[i][j].value = self.backtest_board[i][j]
 
-
+    def set(self, num):
+        self.value = num
     
 
 class Cube:
@@ -152,6 +168,9 @@ class Cube:
 
         if self.selected:
             pg.draw.rect(playboard, (255,0,0), (x, y, self.cube_size, self.cube_size), 3)
+    
+    def update(self, playboard, confirmed = True):
+        a = 0
 
 
 def redraw_window(window, demoboard):
