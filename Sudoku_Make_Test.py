@@ -5,7 +5,7 @@ import pygame as pg
 pg.font.init()
 
 class Grid:
-    '''
+    
     demoboard = [
         [7, 8, 0, 4, 0, 0, 1, 2, 0],
         [6, 0, 0, 0, 7, 5, 0, 0, 9],
@@ -16,8 +16,8 @@ class Grid:
         [0, 7, 0, 3, 0, 0, 0, 1, 2],
         [1, 2, 0, 0, 0, 7, 4, 0, 0],
         [0, 4, 9, 2, 0, 6, 0, 0, 7]
-    ]'''
-
+    ]
+    '''
 
     demoboard = [
         [0, 0, 0, 4, 0, 0, 1, 2, 0],
@@ -30,7 +30,7 @@ class Grid:
         [1, 2, 0, 0, 0, 0, 4, 0, 0],
         [0, 4, 9, 2, 0, 6, 0, 0, 0]
     ]
-
+    '''
     def __init__(self, rows, cols, width, height, win, section):
         self.rows = rows
         self.cols = cols
@@ -124,18 +124,59 @@ class Grid:
             if val_test(self.test_board, num, test_cube):
                 self.test_board[row][col] = num
                 self.cubes[row][col].set(num)
-                #self.cubes[row][col].draw_change
-'''        
-   Try having 2 sepearte def for GUI Solve but reference A to B at the next process 
-'''
+                self.cubes[row][col].cube_update(self.win, True)
+                self.update_test()
+                pg.display.update()
+                pg.time.delay(2)
+
+                if self.GUI_solve():
+                    return True
+
+                self.test_board[row][col] = 0
+                self.cubes[row][col].set(0)
+                self.update_test()
+                self.cubes[row][col].cube_update(self.win, False)
+                pg.display.update()
+                pg.time.delay(2)
+        
+        return False
+
+    def GUI_back_solve(self):
+        backtest_cube = find_empty(self.backtest_board)
+        #backtest_cube = find_empty(self.backtest_board)
+        #Forward test and backward test finished
+        if not backtest_cube: # and not backtest_cube:
+            return True
+        #Backward test finished
+        row, col = backtest_cube
+        for num in range(9, 0, -1):
+            if val_test(self.backtest_board, num, backtest_cube):
+                self.backtest_board[row][col] = num
+                self.back_cubes[row][col].set(num)
+                self.back_cubes[row][col].cube_update(self.win, True)
+                self.update_backtest()
+                pg.display.update()
+                pg.time.delay(2)
+
+                if self.GUI_back_solve():
+                    return True
+
+                self.backtest_board[row][col] = 0
+                self.back_cubes[row][col].set(0)
+                self.update_backtest()
+                self.back_cubes[row][col].cube_update(self.win, False)
+                pg.display.update()
+                pg.time.delay(2)
+        
+        return False
+
     def update_board(self): #temp test for solve display
         for i in range(9):
             for j in range(9):
                 self.cubes[i][j].value = self.test_board[i][j]
                 self.back_cubes[i][j].value = self.backtest_board[i][j]
 
-    def set(self, num):
-        self.value = num
+    
     
 
 class Cube:
@@ -169,8 +210,26 @@ class Cube:
         if self.selected:
             pg.draw.rect(playboard, (255,0,0), (x, y, self.cube_size, self.cube_size), 3)
     
-    def update(self, playboard, confirmed = True):
-        a = 0
+    def cube_update(self, playboard, confirmed = True):
+        fnt = pg.font.SysFont("comic sans", 30)
+        x = (self.col * self.cube_size) + self.xzero
+        y = (self.row * self.cube_size) + self.yzero
+
+        pg.draw.rect(playboard, (255,255,255), (x, y, self.cube_size, self.cube_size), 0)
+
+        text = fnt.render(str(self.value), 1, (0,0,0))
+        playboard.blit(text, (x + ((self.cube_size - text.get_width())/2), y + ((self.cube_size - text.get_height())/2)))
+        if confirmed:
+            pg.draw.rect(playboard, (0,255,0), (x, y, self.cube_size, self.cube_size), 3)
+        else:
+            pg.draw.rect(playboard, (255,0,0), (x, y, self.cube_size, self.cube_size), 3)
+    
+    
+    def set(self, num):
+        self.value = num
+    
+    def temp_set(self, num):
+        self.temp_value = num
 
 
 def redraw_window(window, demoboard):
@@ -205,6 +264,14 @@ def val_test(board, num, pos):
     
     return True #passed all tests
 
+def GUI_check(board):
+    board.GUI_solve()
+    return board
+
+def GUI_backcheck(board):
+    board.GUI_back_solve()
+    return board
+
 def main():
     win = pg.display.set_mode((360,750))
     pg.display.set_caption("Demo")
@@ -218,9 +285,19 @@ def main():
                 run = False
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
-                    board.solve()
-                    board.backcheck_solve()
-                    board.update_board()
+                    #with Pool() as p:
+                    #    board = p.map()
+                    #pool = Pool()
+                    #forward = pool.apply_async(board.GUI_solve)
+                    
+                    ''' Look into use of Pool() for running GUI function simultaneously 
+                    '''
+
+                    board.GUI_solve()
+                    board.GUI_back_solve()
+                    #board.solve()
+                    #board.backcheck_solve()
+                    #board.update_board()
                     
                     #board.update_backtest()
 
