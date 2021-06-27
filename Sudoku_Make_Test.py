@@ -1,5 +1,5 @@
 #from Sudoku_proto import find_blank
-from multiprocessing import pool
+import threading
 import time
 import pygame as pg
 pg.font.init()
@@ -175,8 +175,6 @@ class Grid:
             for j in range(9):
                 self.cubes[i][j].value = self.test_board[i][j]
                 self.back_cubes[i][j].value = self.backtest_board[i][j]
-
-    
     
 
 class Cube:
@@ -264,15 +262,7 @@ def val_test(board, num, pos):
     
     return True #passed all tests
 
-def GUI_check(board):
-    board.GUI_solve()
-    return board
-
-def GUI_backcheck(board):
-    board.GUI_back_solve()
-    return board
-
-def main():
+if __name__ == "__main__":
     win = pg.display.set_mode((360,750))
     pg.display.set_caption("Demo")
     board = Grid(9,9,360,750, win, 0)
@@ -285,25 +275,14 @@ def main():
                 run = False
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
-                    #with Pool() as p:
-                    #    board = p.map()
-                    #pool = Pool()
-                    #forward = pool.apply_async(board.GUI_solve)
                     
-                    ''' Look into use of Pool() for running GUI function simultaneously 
-                    '''
-
-                    board.GUI_solve()
-                    board.GUI_back_solve()
-                    #board.solve()
-                    #board.backcheck_solve()
-                    #board.update_board()
-                    
-                    #board.update_backtest()
-
+                    forward = threading.Thread(target= board.GUI_solve)
+                    backward = threading.Thread(target= board.GUI_back_solve)
+                
+                    forward.start()
+                    backward.start()
 
         redraw_window(win, board)
-        #redraw_window(win, board_backup)
         pg.display.flip()
     
-main()
+#main()
