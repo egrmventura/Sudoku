@@ -5,7 +5,7 @@ import pygame as pg
 pg.font.init()
 
 class Grid:
-    
+    '''
     demoboard = [
         [7, 8, 0, 4, 0, 0, 1, 2, 0],
         [6, 0, 0, 0, 7, 5, 0, 0, 9],
@@ -14,6 +14,18 @@ class Grid:
         [0, 0, 1, 0, 5, 0, 9, 3, 0],
         [9, 0, 4, 0, 6, 0, 0, 0, 5],
         [0, 7, 0, 3, 0, 0, 0, 1, 2],
+        [1, 2, 0, 0, 0, 7, 4, 0, 0],
+        [0, 4, 9, 2, 0, 6, 0, 0, 7]
+    ]
+    '''
+    demoboard = [
+        [0, 0, 0, 4, 0, 0, 1, 2, 0],
+        [6, 0, 0, 0, 7, 5, 0, 0, 9],
+        [0, 0, 0, 6, 0, 1, 0, 7, 8],
+        [0, 0, 0, 0, 4, 0, 2, 6, 0],
+        [0, 0, 1, 0, 5, 0, 9, 3, 0],
+        [9, 0, 4, 0, 6, 0, 0, 0, 5],
+        [0, 0, 0, 3, 0, 0, 0, 1, 2],
         [1, 2, 0, 0, 0, 7, 4, 0, 0],
         [0, 4, 9, 2, 0, 6, 0, 0, 7]
     ]
@@ -50,6 +62,7 @@ class Grid:
         self.win = win
         self.GUI_test1_fin = False
         self.GUI_test2_fin = False
+        self.test_status = None
     
     def update_test(self):
         self.test_board = [[self.cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
@@ -81,6 +94,18 @@ class Grid:
             for j in range(self.cols):
                 self.cubes[i][j].draw(self.win)
                 self.back_cubes[i][j].draw(self.win)
+        
+        fnt = pg.font.SysFont("comic sans", 40)
+        if self.test_status == True:
+            text = fnt.render("VALID PUZZLE", True, (90, 150, 55))
+            pg.draw.rect(self.win, (190, 220, 170), (0, self.width, self.width, self.height - (2 * self.width)))
+            self.win.blit(text, ((self.width - text.get_width())/ 2, (self.height - text.get_height()) / 2))
+            
+        elif self.test_status == False:
+            text = fnt.render("INVALID PUZZLE", True, (200, 45, 0))
+            pg.draw.rect(self.win, (240, 160, 160), (0, self.width, self.width, self.height - (2 * self.width)))
+            self.win.blit(text, ((self.width - text.get_width())/ 2, (self.height - text.get_height()) / 2))
+            
     
     def solve(self):
         test_cube = find_empty(self.test_board)
@@ -191,26 +216,23 @@ class Grid:
     
     #correct_test checks the forward and backward tests to find if they are the same 
     #if they are not the same, then there is more than one answer answer to the sudoku
-    def correct_test(self, playboard): 
-        correct = True
-        fnt = pg.font.SysFont("comic sans", 40)
+    def correct_test(self): 
         for i in range(9):
             for j in range(9):
                 if self.cubes[i][j].value != self.back_cubes[i][j].value:
                     self.cubes[i][j].cube_update(self.win, True, False)
                     self.back_cubes[i][j].cube_update(self.win, True, False)
+                    self.cubes[i][j].draw(self.win)
+                    self.back_cubes[i][j].draw(self.win)
                     print("incorrect at [" + str(i) + "][" + str(j) + "]")
-                    correct = False
+                    self.test_status = False
         
-        print(str(correct) + " correct")
-        if correct:
-            text = fnt.render("VALID PUZZLE", True, (90, 150, 55))
-            playboard.blit(text, (self.width / 2, self.height / 2))
-            print("test1")
-        else:
-            text = fnt.render("INVALID PUZZLE", True, (200, 45, 0))
-            playboard.blit(text, (self.width / 2, self.height / 2))
-            print("test2")
+        if not (self.test_status == False):
+            self.test_status = True
+
+
+        
+        
 
 
 class Cube:
@@ -226,6 +248,7 @@ class Cube:
         self.xzero = 0
         self.yzero = 0 if section == 0 else self.height - self.width
         self.section = section
+        self.cube_status = True
 
     def draw(self, playboard):
         fnt = pg.font.SysFont("comic sans", 30)
@@ -234,28 +257,34 @@ class Cube:
         y = self.yzero + (self.row * self.cube_size)
         
 #Reset this layout for showing upper and lower tests
-        if self.value == 0 and self.temp != 0:
-            text = fnt.render(str(self.temp), True, (128,128,128))
-            playboard.blit(text, (x+3, y+3))
-        elif self.value != 0:
-            text = fnt.render(str(self.value), True, (0,0,0))
-            playboard.blit(text, (x + (self.cube_size/2 - text.get_width()/2), y + (self.cube_size/2 - text.get_height()/2)))
-
-        if self.selected:
-            pg.draw.rect(playboard, (200, 45, 0), (x, y, self.cube_size, self.cube_size), 3)
-    
-    def cube_update(self, playboard, confirmed = True, incorrect = False):
-        fnt = pg.font.SysFont("comic sans", 30)
-        x = (self.col * self.cube_size) + self.xzero
-        y = (self.row * self.cube_size) + self.yzero
-
-        pg.draw.rect(playboard, (255,255,255), (x, y, self.cube_size, self.cube_size), 0)
-
-        if incorrect:
-            pg.draw.rect(playboard, (240,160,160), (x, y, self.cube_size, self.cube_size))
+        if not self.cube_status:
+            pg.draw.rect(playboard, (240, 160, 160), (x, y, self.cube_size, self.cube_size))
             text = fnt.render(str(self.value), 1, (200, 45, 0))
             playboard.blit(text, (x + ((self.cube_size - text.get_width())/2), y + ((self.cube_size - text.get_height())/2)))
         else:
+            if self.value == 0 and self.temp != 0:
+                text = fnt.render(str(self.temp), True, (128,128,128))
+                playboard.blit(text, (x+3, y+3))
+            elif self.value != 0:
+                text = fnt.render(str(self.value), True, (0,0,0))
+                playboard.blit(text, (x + (self.cube_size/2 - text.get_width()/2), y + (self.cube_size/2 - text.get_height()/2)))
+
+            if self.selected:
+                pg.draw.rect(playboard, (200, 45, 0), (x, y, self.cube_size, self.cube_size), 3)
+    
+    def cube_update(self, playboard, confirmed = True, correct = True):
+        fnt = pg.font.SysFont("comic sans", 30)
+        x = (self.col * self.cube_size) + self.xzero
+        y = (self.row * self.cube_size) + self.yzero
+        self.cube_status = correct
+        
+
+        if not self.cube_status:
+            pg.draw.rect(playboard, (240, 160, 160), (x, y, self.cube_size, self.cube_size))
+            text = fnt.render(str(self.value), 1, (200, 45, 0))
+            playboard.blit(text, (x + ((self.cube_size - text.get_width())/2), y + ((self.cube_size - text.get_height())/2)))
+        else:
+            pg.draw.rect(playboard, (255, 255, 255), (x, y, self.cube_size, self.cube_size), 0)
             text = fnt.render(str(self.value), 1, (0,0,0))
             playboard.blit(text, (x + ((self.cube_size - text.get_width())/2), y + ((self.cube_size - text.get_height())/2)))
             if confirmed:
@@ -306,6 +335,20 @@ def val_test(board, num, pos):
     
     return True #passed all tests
 
+def GUI_output(board):
+    while not (find_empty(board.backtest_board) == None) and not (find_empty(board.test_board) == None):
+        forward = threading.Thread(target= board.GUI_solve)
+        forward.start()
+        #forward.join()
+        #time.sleep(0.001)
+        backward = threading.Thread(target= board.GUI_back_solve)
+    
+        #forward.start()
+        backward.start()
+        forward.join()
+        backward.join()
+    board.correct_test()
+
 if __name__ == "__main__":
     win = pg.display.set_mode((360,780))
     pg.display.set_caption("Demo")
@@ -319,19 +362,9 @@ if __name__ == "__main__":
                 run = False
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
-                    while not (find_empty(board.backtest_board) == None) and not (find_empty(board.test_board) == None):
-                        forward = threading.Thread(target= board.GUI_solve)
-                        forward.start()
-                        #forward.join()
-                        time.sleep(0.001)
-                        backward = threading.Thread(target= board.GUI_back_solve)
+                    GUI_output(board)
                     
-                        #forward.start()
-                        backward.start()
-                        forward.join()
-                        backward.join()
                     
-                    board.correct_test(win)
                 '''solve print of validity / test false match'''
 
         redraw_window(win, board)
