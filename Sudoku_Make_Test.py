@@ -335,16 +335,14 @@ def val_test(board, num, pos):
     
     return True #passed all tests
 
-def GUI_output(board):
-    while not (find_empty(board.backtest_board) == None) and not (find_empty(board.test_board) == None):
+def GUI_output(board, board_backup):
+    while not (find_empty(board_backup.backtest_board) == None) and not (find_empty(board.test_board) == None):
         forward = threading.Thread(target= board.GUI_solve)
+        backward = threading.Thread(target= board_backup.GUI_back_solve)
         forward.start()
-        #forward.join()
         #time.sleep(0.001)
-        backward = threading.Thread(target= board.GUI_back_solve)
-    
-        #forward.start()
         backward.start()
+        #print("empty " + str(find_empty(board.test_board)))
         forward.join()
         backward.join()
     board.correct_test()
@@ -353,7 +351,7 @@ if __name__ == "__main__":
     win = pg.display.set_mode((360,780))
     pg.display.set_caption("Demo")
     board = Grid(9,9,360,780, win, 0)
-    #board_backup = Grid(9,9,360,750, win, 1)
+    board_backup = Grid(9,9,360,750, win, 1)
     key = None
     run = True
     while run:
@@ -362,7 +360,7 @@ if __name__ == "__main__":
                 run = False
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
-                    GUI_output(board)
+                    GUI_output(board, board_backup)
                     
                     
                 '''solve print of validity / test false match'''
