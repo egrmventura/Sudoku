@@ -2,6 +2,7 @@
 import threading
 import time
 import pygame as pg
+from icecream import ic
 pg.font.init()
 
 class Grid:
@@ -150,9 +151,9 @@ class Grid:
                 self.cubes[row][col].cube_update(self.win, True)
                 self.update_test()
                 pg.display.update()
-                self.forcount+=1
+                ic("forward", test_cube, self.cubes[row][col])
                 #print("f" + str(self.forcount) + " " + str(row) + ":" + str(col) + " " + str(num))
-                time.sleep(.005)
+                time.sleep(.002)
 
                 if self.GUI_solve():
                     #self.GUI_test1_fin = True
@@ -163,10 +164,8 @@ class Grid:
                 self.update_test()
                 self.cubes[row][col].cube_update(self.win, False)
                 pg.display.update()
-                self.forcount+=1
-                #print("f" + str(self.forcount) + " " + str(row) + ":" + str(col) + " " + str(num))
-
-                time.sleep(.005)
+                ic("forward", test_cube, self.cubes[row][col])
+                time.sleep(.002)
         
         #self.GUI_test1_fin = True
         return False
@@ -186,10 +185,10 @@ class Grid:
                 self.back_cubes[row][col].cube_update(self.win, True)
                 self.update_backtest()
                 pg.display.update()
-                self.bakcount+=1
+                #self.bakcount+=1
                 #print("b" + str(self.bakcount) + " " + str(row) + ":" + str(col) + " " + str(num))
-
-                time.sleep(.005)
+                ic("back", backtest_cube, self.back_cubes[row][col])
+                time.sleep(.002)
                 
                 if self.GUI_back_solve():
                     #self.GUI_test2_fin = True
@@ -200,10 +199,10 @@ class Grid:
                 self.update_backtest()
                 self.back_cubes[row][col].cube_update(self.win, False)
                 pg.display.update()
-                self.bakcount+=1
+                #self.bakcount+=1
                 #print("b" + str(self.bakcount) + " " + str(row) + ":" + str(col) + " " + str(num))
-
-                time.sleep(.005)
+                ic("back", backtest_cube, self.back_cubes[row][col])
+                time.sleep(.002)
         
         #self.GUI_test2_fin = True
         return False
@@ -335,12 +334,12 @@ def val_test(board, num, pos):
     
     return True #passed all tests
 
-def GUI_output(board, board_backup):
-    while not (find_empty(board_backup.backtest_board) == None) and not (find_empty(board.test_board) == None):
+def GUI_output(board):
+    while not (find_empty(board.backtest_board) == None) and not (find_empty(board.test_board) == None):
         forward = threading.Thread(target= board.GUI_solve)
-        backward = threading.Thread(target= board_backup.GUI_back_solve)
+        backward = threading.Thread(target= board.GUI_back_solve)
         forward.start()
-        #time.sleep(0.001)
+        time.sleep(0.001)
         backward.start()
         #print("empty " + str(find_empty(board.test_board)))
         forward.join()
@@ -351,7 +350,7 @@ if __name__ == "__main__":
     win = pg.display.set_mode((360,780))
     pg.display.set_caption("Demo")
     board = Grid(9,9,360,780, win, 0)
-    board_backup = Grid(9,9,360,750, win, 1)
+    #board_backup = Grid(9,9,360,750, win, 1)
     key = None
     run = True
     while run:
@@ -360,7 +359,7 @@ if __name__ == "__main__":
                 run = False
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
-                    GUI_output(board, board_backup)
+                    GUI_output(board)
                     
                     
                 '''solve print of validity / test false match'''
