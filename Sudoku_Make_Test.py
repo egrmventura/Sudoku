@@ -5,7 +5,7 @@ import pygame as pg
 pg.font.init()
 
 class Grid:
-    '''
+    '''    
     demoboard = [
         [7, 8, 0, 4, 0, 0, 1, 2, 0],
         [6, 0, 0, 0, 7, 5, 0, 0, 9],
@@ -17,7 +17,7 @@ class Grid:
         [1, 2, 0, 0, 0, 7, 4, 0, 0],
         [0, 4, 9, 2, 0, 6, 0, 0, 7]
     ]
-    '''
+    
     demoboard = [
         [0, 0, 0, 4, 0, 0, 1, 2, 0],
         [6, 0, 0, 0, 7, 5, 0, 0, 9],
@@ -42,7 +42,7 @@ class Grid:
         [1, 2, 0, 0, 0, 0, 4, 0, 0],
         [0, 4, 9, 2, 0, 6, 0, 0, 0]
     ]
-    '''
+    
     forcount = 0
     bakcount = 0
 
@@ -336,7 +336,7 @@ def val_test(board, num, pos):
     return True #passed all tests
 
 def GUI_output(board):
-    while not (find_empty(board.backtest_board) == None) and not (find_empty(board.test_board) == None):
+    '''while not (find_empty(board.backtest_board) == None) and not (find_empty(board.test_board) == None):
         forward = threading.Thread(target= board.GUI_solve)
         forward.start()
         #forward.join()
@@ -347,6 +347,9 @@ def GUI_output(board):
         backward.start()
         forward.join()
         backward.join()
+    '''
+    board.GUI_solve()
+    board.GUI_back_solve()
     board.correct_test()
 
 if __name__ == "__main__":
