@@ -1,7 +1,9 @@
 #from Sudoku_proto import find_blank
 import threading
+import random
 import time
 import pygame as pg
+from icecream import ic
 pg.font.init()
 
 class Grid:
@@ -63,6 +65,7 @@ class Grid:
         self.GUI_test1_fin = False
         self.GUI_test2_fin = False
         self.test_status = None
+        self.opening_strikes = 5
     
     def update_test(self):
         self.test_board = [[self.cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
@@ -230,6 +233,94 @@ class Grid:
         if not (self.test_status == False):
             self.test_status = True
 
+    def clear_cubes(self):
+        for i in range(9):
+            for j in range(9):
+                self.cubes[i][j].set(0)
+                self.cubes[i][j].temp_set(0)
+                self.back_cubes[i][j].set(0)
+                self.back_cubes[i][j].temp_set(0)
+        self.update_test()
+        self.update_backtest()
+        pg.display.update()
+
+    def backtest_board_dup(self):
+        for i in range(9):
+            for j in range(9):
+                self.backtest_board[i][j] = self.test_board[i][j]
+
+    def random_fill(self):
+        fill_cube = find_empty(self.test_board)
+        if not fill_cube:
+            self.backtest_board_dup()
+            return True
+        row, col = fill_cube
+        numlist = [1,2,3,4,5,6,7,8,9]
+        random.shuffle(numlist)
+        for num in numlist:
+            if val_test(self.test_board, num, fill_cube):
+                self.test_board[row][col] = num
+                if self.random_fill():
+                    return True
+                self.test_board[row][col] = 0
+        return False
+    
+    def GUI_random_fill(self):
+        fill_cube = find_empty(self.test_board)
+        if not fill_cube:
+            return True
+        row, col = fill_cube
+        numlist = [1,2,3,4,5,6,7,8,9]
+        random.shuffle(numlist)
+        for num in numlist:
+            if val_test(self.test_board, num, fill_cube):
+                self.test_board[row][col] = num
+                self.cubes[row][col].set(num)
+                self.cubes[row][col].cube_update(self.win, True)
+                self.update_test()
+                self.backtest_board[row][col] = num
+                self.back_cubes[row][col].set(num)
+                self.back_cubes[row][col].cube_update(self.win, True)
+                self.update_backtest()
+                pg.display.update()
+                time.sleep(0.005)
+                if self.GUI_random_fill():
+                    return True
+                
+                self.test_board[row][col] = 0
+                self.cubes[row][col].set(0)
+                self.cubes[row][col].cube_update(self.win, False)
+                self.update_test()
+                self.backtest_board[row][col] = 0
+                self.back_cubes[row][col].set(0)
+                self.back_cubes[row][col].cube_update(self.win, False)
+                self.update_backtest()
+                pg.display.update()
+                time.sleep(0.005)
+        return False
+
+    def open_cube_coord(self):
+        if self.opening_strikes == 0:
+            return False
+        row1 = random.randint(0,8)
+        col1 = random.randint(0,8)
+        mirr = random.randint(0,3)
+        #mirr is mirror axis [ 0:y-axis, 1:y=x axis, 2:x-axis, 3:y=-x axis ]
+        if mirr == 0:
+            row2 = row1
+            col2 = 8 - col1
+        elif mirr == 1:
+            row2 = col1
+            col2 = row1
+        elif mirr == 2:
+            row2 = 8 - row1
+            col2 = col1
+        else:
+            row2 = -col1
+            col2 = -row1
+        
+
+
 
         
         
@@ -335,6 +426,24 @@ def val_test(board, num, pos):
     
     return True #passed all tests
 
+def open_cube_coord():
+    row = random.randint(0,8)
+    col = random.randint(0,8)
+    mirr = random.randint(0,3)
+    #mirr is mirror axis [ 0:y-axis, 1:y=x axis, 2:x-axis, 3:y=-x axis ]
+    if mirr == 0:
+        if col == 4: return([row, col])
+        else: return([row, col, row, 8 - col])
+    elif mirr == 1:
+        if col == row: return([row, col])
+        else: return([row, col, col, row])
+    elif mirr == 2:
+        if row == 4: return([row, col])
+        else: return([row, col, 8 - row, col])
+    else:
+        if row == 8 - col: return([row, col])
+        else: return([row, col, -col, -row])
+
 def GUI_output(board):
     '''while not (find_empty(board.backtest_board) == None) and not (find_empty(board.test_board) == None):
         forward = threading.Thread(target= board.GUI_solve)
@@ -352,6 +461,17 @@ def GUI_output(board):
     board.GUI_back_solve()
     board.correct_test()
 
+def randomfill(board):
+    board.clear_cubes()
+    board.random_fill()
+    board.update_board()
+    pg.display.update()
+
+def GUIrandfill(board):
+    board.clear_cubes()
+    pg.display.update()
+    board.GUI_random_fill()    
+
 if __name__ == "__main__":
     win = pg.display.set_mode((360,780))
     pg.display.set_caption("Demo")
@@ -366,7 +486,12 @@ if __name__ == "__main__":
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
                     GUI_output(board)
-                    
+                
+                if event.key == pg.K_m:
+                    randomfill(board)
+                
+                if event.key == pg.K_n:
+                    GUIrandfill(board)
                     
                 '''solve print of validity / test false match'''
 
