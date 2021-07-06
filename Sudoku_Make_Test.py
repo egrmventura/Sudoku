@@ -299,26 +299,32 @@ class Grid:
                 time.sleep(0.005)
         return False
 
-    def open_cube_coord(self):
+    def remove_opening(self): ###Not working yet.
         if self.opening_strikes == 0:
-            return False
-        row1 = random.randint(0,8)
-        col1 = random.randint(0,8)
-        mirr = random.randint(0,3)
-        #mirr is mirror axis [ 0:y-axis, 1:y=x axis, 2:x-axis, 3:y=-x axis ]
-        if mirr == 0:
-            row2 = row1
-            col2 = 8 - col1
-        elif mirr == 1:
-            row2 = col1
-            col2 = row1
-        elif mirr == 2:
-            row2 = 8 - row1
-            col2 = col1
+            return True
         else:
-            row2 = -col1
-            col2 = -row1
-        
+            temp_val1, temp_val2 = 0, 0
+            while temp_val1 == 0 and temp_val2 == 0:
+                row1, col1, row2, col2 = open_cube_coord()
+                temp_val1 = self.test_board[row1][col1]
+                temp_val2 = self.test_board[row2][col2]   
+            self.test_board[row1][col1] = 0
+            self.test_board[row2][col2] = 0
+            self.backtest_board[row1][col1] = 0
+            self.backtest_board[row2][col2] = 0
+            self.solve()
+            self.backcheck_solve()
+            if self.correct_test():
+                ic(row1, col1, row2, col2)
+                if self.remove_opening():
+                    return True
+            self.opening_strikes-=1
+            self.test_board[row1][col1] = temp_val1
+            self.test_board[row2][col2] = temp_val2
+            self.backtest_board[row1][col1] = temp_val1
+            self.backtest_board[row2][col2] = temp_val2
+            return False
+            
 
 
 
@@ -466,6 +472,25 @@ def randomfill(board):
     board.random_fill()
     board.update_board()
     pg.display.update()
+    
+def open_board_cubes(board):
+    board.remove_opening()
+    board.update_board()
+    pg.display.update()
+
+def open_cube_coord():
+    row1 = random.randint(0,8)
+    col1 = random.randint(0,8)
+    mirr = random.randint(0,3)
+    #mirr is mirror axis [ 0:y-axis, 1:y=x axis, 2:x-axis, 3:y=-x axis ]
+    if mirr == 0:
+        return([row1, col1, row1, 8-col1])
+    elif mirr == 1:
+        return([row1, col1, col1, row1])
+    elif mirr == 2:
+        return([row1, col1, 8-row1, col1])
+    else:
+        return([row1, col1, 8-col1, 8-row1])
 
 def GUIrandfill(board):
     board.clear_cubes()
@@ -489,6 +514,8 @@ if __name__ == "__main__":
                 
                 if event.key == pg.K_m:
                     randomfill(board)
+                    time.sleep(4)
+                    open_board_cubes(board)
                 
                 if event.key == pg.K_n:
                     GUIrandfill(board)
