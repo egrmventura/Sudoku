@@ -232,6 +232,13 @@ class Grid:
         
         if not (self.test_status == False):
             self.test_status = True
+    
+    def correct_test_bool(self):
+        for i in range(9):
+            for j in range(9):
+                if self.test_board[i][j] != self.backtest_board[i][j]:
+                    return False
+        return True
 
     def clear_cubes(self):
         for i in range(9):
@@ -308,13 +315,13 @@ class Grid:
                 row1, col1, row2, col2 = open_cube_coord()
                 temp_val1 = self.test_board[row1][col1]
                 temp_val2 = self.test_board[row2][col2]   
-            self.test_board[row1][col1] = 0
-            self.test_board[row2][col2] = 0
-            self.backtest_board[row1][col1] = 0
-            self.backtest_board[row2][col2] = 0
+            ic(row1, col1, temp_val1, row2, col2, temp_val2)
+            self.test_board[row1][col1], self.test_board[row2][col2], self.backtest_board[row1][col1], self.backtest_board[row2][col2] = 0, 0, 0, 0
+            ic(self.test_board)
             self.solve()
             self.backcheck_solve()
-            if self.correct_test():
+            ic(self.test_board, self.backtest_board, self.correct_test())
+            if self.correct_test_bool():
                 ic(row1, col1, row2, col2)
                 if self.remove_opening():
                     return True
