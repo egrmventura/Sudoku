@@ -110,17 +110,25 @@ class Grid:
             self.win.blit(text, ((self.width - text.get_width())/ 2, (self.height - text.get_height()) / 2))
             
     
-    def solve(self):
-        test_cube = find_empty(self.test_board)
+    def solve(self, board, forward=True):
+        test_cube = find_empty(board)
         if not test_cube:
             return True
         row, col = test_cube
-        for num in range(1, 10):
-            if val_test(self.test_board, num, test_cube):
-                self.test_board[row][col] = num
-                if self.solve():
-                    return True
-                self.test_board[row][col] = 0
+        if forward:
+            for num in range(1, 10):
+                if val_test(board, num, test_cube):
+                    board[row][col] = num
+                    if self.solve(board, True):
+                        return True
+                    board[row][col] = 0
+        else:
+            for num in range(9, 0, -1):
+                if val_test(board, num, test_cube):
+                    board[row][col] = num
+                    if self.solve(board, False):
+                        return True
+                    board[row][col] = 0
 
         return False
 
@@ -234,9 +242,13 @@ class Grid:
             self.test_status = True
     
     def correct_test_bool(self):
+        cube_removal_test_for = self.test_board
+        cube_removal_test_back = self.backtest_board
+        self.solve(cube_removal_test_for)
+        self.solve(cube_removal_test_back, False)
         for i in range(9):
             for j in range(9):
-                if self.test_board[i][j] != self.backtest_board[i][j]:
+                if cube_removal_test_for[i][j] != cube_removal_test_back[i][j]:
                     return False
         return True
 
@@ -309,7 +321,8 @@ class Grid:
     def remove_opening(self): ###Not working yet.
         if self.opening_strikes == 0:
             return True
-        else:
+        while self.opening_strikes > 0:
+            ic("next", self.test_board)
             temp_val1, temp_val2 = 0, 0
             while temp_val1 == 0 and temp_val2 == 0:
                 row1, col1, row2, col2 = open_cube_coord()
@@ -317,20 +330,18 @@ class Grid:
                 temp_val2 = self.test_board[row2][col2]   
             ic(row1, col1, temp_val1, row2, col2, temp_val2)
             self.test_board[row1][col1], self.test_board[row2][col2], self.backtest_board[row1][col1], self.backtest_board[row2][col2] = 0, 0, 0, 0
-            ic(self.test_board)
-            self.solve()
-            self.backcheck_solve()
-            ic(self.test_board, self.backtest_board, self.correct_test())
+            
+            #self.solve()
+            #self.backcheck_solve()
+            ic(self.opening_strikes, self.test_board, self.backtest_board)
             if self.correct_test_bool():
-                ic(row1, col1, row2, col2)
-                if self.remove_opening():
-                    return True
-            self.opening_strikes-=1
-            self.test_board[row1][col1] = temp_val1
-            self.test_board[row2][col2] = temp_val2
-            self.backtest_board[row1][col1] = temp_val1
-            self.backtest_board[row2][col2] = temp_val2
-            return False
+                ic("Pass")
+            else:
+                ic("Fail, repopulate")
+                self.opening_strikes-=1
+                self.update_test()
+                self.update_backtest()
+        return False
             
 
 
@@ -485,6 +496,11 @@ def open_board_cubes(board):
     board.update_board()
     pg.display.update()
 
+def remove_cubes(board):
+    board.remove_opening()
+    board.update_board()
+    pg.display.update()
+
 def open_cube_coord():
     row1 = random.randint(0,8)
     col1 = random.randint(0,8)
@@ -526,6 +542,9 @@ if __name__ == "__main__":
                 
                 if event.key == pg.K_n:
                     GUIrandfill(board)
+
+                if event.key == pg.K_r:
+                    remove_cubes(board)
                     
                 '''solve print of validity / test false match'''
 
