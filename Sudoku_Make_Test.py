@@ -319,28 +319,29 @@ class Grid:
         return False
 
     def remove_opening(self): ###Not working yet.
-        if self.opening_strikes == 0:
+        if self.opening_strikes <= 0:
             return True
-        while self.opening_strikes > 0:
-            ic("next", self.test_board)
-            temp_val1, temp_val2 = 0, 0
-            while temp_val1 == 0 and temp_val2 == 0:
-                row1, col1, row2, col2 = open_cube_coord()
-                temp_val1 = self.test_board[row1][col1]
-                temp_val2 = self.test_board[row2][col2]   
-            ic(row1, col1, temp_val1, row2, col2, temp_val2)
-            self.test_board[row1][col1], self.test_board[row2][col2], self.backtest_board[row1][col1], self.backtest_board[row2][col2] = 0, 0, 0, 0
-            
+        for _ in range(5):
+            row1, col1, row2, col2 = open_cube_coord()
+            temp_val1, temp_val2 = self.test_board[row1][col1], self.test_board[row2][col2]
+            if temp_val1 == 0 and temp_val2 ==0:
+                return False
+            else:
+                self.test_board[row1][col1], self.test_board[row2][col2] = 0, 0
+                self.backtest_board[row1][col1], self.backtest_board[row2][col2] = 0, 0
+                ic(row1, col1, temp_val1, row2, col2, temp_val2)
+                
+                ###
             #self.solve()
             #self.backcheck_solve()
-            ic(self.opening_strikes, self.test_board, self.backtest_board)
-            if self.correct_test_bool():
-                ic("Pass")
-            else:
+                ic(self.opening_strikes, self.test_board, self.backtest_board)
+                if self.correct_test_bool():
+                    if self.remove_opening():
+                        return True
                 ic("Fail, repopulate")
                 self.opening_strikes-=1
-                self.update_test()
-                self.update_backtest()
+                self.test_board[row1][col1], self.test_board[row2][col2] = temp_val1, temp_val2
+                self.backtest_board[row1][col1], self.backtest_board[row2][col2] = temp_val1, temp_val2
         return False
             
 
@@ -449,24 +450,6 @@ def val_test(board, num, pos):
                 return False
     
     return True #passed all tests
-
-def open_cube_coord():
-    row = random.randint(0,8)
-    col = random.randint(0,8)
-    mirr = random.randint(0,3)
-    #mirr is mirror axis [ 0:y-axis, 1:y=x axis, 2:x-axis, 3:y=-x axis ]
-    if mirr == 0:
-        if col == 4: return([row, col])
-        else: return([row, col, row, 8 - col])
-    elif mirr == 1:
-        if col == row: return([row, col])
-        else: return([row, col, col, row])
-    elif mirr == 2:
-        if row == 4: return([row, col])
-        else: return([row, col, 8 - row, col])
-    else:
-        if row == 8 - col: return([row, col])
-        else: return([row, col, -col, -row])
 
 def GUI_output(board):
     '''while not (find_empty(board.backtest_board) == None) and not (find_empty(board.test_board) == None):
