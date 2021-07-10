@@ -48,14 +48,16 @@ class Grid:
     forcount = 0
     bakcount = 0
 
-    def __init__(self, rows, cols, width, height, win, section):
+    def __init__(self, rows, cols, width, height, win):
         self.rows = rows
         self.cols = cols
-        self.section = section
         self.cubes = [[Cube(self.demoboard[i][j], i, j, width, height, 0) for j in range(cols)] for i in range(rows)]
-        self.back_cubes = [[Cube(self.demoboard[i][j], i, j, width, height, 1) for j in range(cols)] for i in range(rows)]
+        self.test_cubes = [[Cube(self.demoboard[i][j], i, j, width, height, 1) for j in range(cols)] for i in range(rows)]
+        self.backtest_cubes = [[Cube(self.demoboard[i][j], i, j, width, height, 2) for j in range(cols)] for i in range(rows)]
         self.width = width
         self.height = height
+        self.play_board = None
+        self.update_playboard()
         self.test_board = None
         self.update_test()
         self.backtest_board = None
@@ -67,16 +69,22 @@ class Grid:
         self.test_status = None
         self.opening_strikes = 5
     
+    def update_playboard(self):
+        self.play_board = [[self.cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
+
     def update_test(self):
-        self.test_board = [[self.cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
+        self.test_board = [[self.test_cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
 
     def update_backtest(self):
-        self.backtest_board = [[self.back_cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
+        self.backtest_board = [[self.backtest_cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
 
-    def sketch(self, value):
+
+    def sketch(self, value):    
+        # TODO check into use of sketch function and whether to separate for different cube classes
         row, col = self.selected
         self.cubes[row][col].set(value)
-        self.back_cubes[row][col].set(value)
+        self.test_cubes[row][col].set(value)
+        self.backtest_cubes[row][col].set(value)
 
     def draw(self):
         gap = self.width / 9
@@ -95,8 +103,8 @@ class Grid:
     
         for i in range(self.rows):
             for j in range(self.cols):
-                self.cubes[i][j].draw(self.win)
-                self.back_cubes[i][j].draw(self.win)
+                self.test_cubes[i][j].draw(self.win)
+                self.backtest_cubes[i][j].draw(self.win)
         
         fnt = pg.font.SysFont("comic sans", 40)
         if self.test_status == True:
@@ -157,8 +165,8 @@ class Grid:
         for num in range(1, 10):
             if val_test(self.test_board, num, test_cube):
                 self.test_board[row][col] = num
-                self.cubes[row][col].set(num)
-                self.cubes[row][col].cube_update(self.win, True)
+                self.test_cubes[row][col].set(num)
+                self.test_cubes[row][col].cube_update(self.win, True)
                 self.update_test()
                 pg.display.update()
                 self.forcount+=1
@@ -170,9 +178,9 @@ class Grid:
                     return True
 
                 self.test_board[row][col] = 0
-                self.cubes[row][col].set(0)
+                self.test_cubes[row][col].set(0)
                 self.update_test()
-                self.cubes[row][col].cube_update(self.win, False)
+                self.test_cubes[row][col].cube_update(self.win, False)
                 pg.display.update()
                 self.forcount+=1
                 #print("f" + str(self.forcount) + " " + str(row) + ":" + str(col) + " " + str(num))
@@ -193,8 +201,8 @@ class Grid:
         for num in range(9, 0, -1):
             if val_test(self.backtest_board, num, backtest_cube):
                 self.backtest_board[row][col] = num
-                self.back_cubes[row][col].set(num)
-                self.back_cubes[row][col].cube_update(self.win, True)
+                self.backtest_cubes[row][col].set(num)
+                self.backtest_cubes[row][col].cube_update(self.win, True)
                 self.update_backtest()
                 pg.display.update()
                 self.bakcount+=1
@@ -207,9 +215,9 @@ class Grid:
                     return True
 
                 self.backtest_board[row][col] = 0
-                self.back_cubes[row][col].set(0)
+                self.backtest_cubes[row][col].set(0)
                 self.update_backtest()
-                self.back_cubes[row][col].cube_update(self.win, False)
+                self.backtest_cubes[row][col].cube_update(self.win, False)
                 pg.display.update()
                 self.bakcount+=1
                 #print("b" + str(self.bakcount) + " " + str(row) + ":" + str(col) + " " + str(num))
@@ -222,19 +230,19 @@ class Grid:
     def update_board(self): #temp test for solve display
         for i in range(9):
             for j in range(9):
-                self.cubes[i][j].value = self.test_board[i][j]
-                self.back_cubes[i][j].value = self.backtest_board[i][j]
+                self.test_cubes[i][j].value = self.test_board[i][j]
+                self.backtest_cubes[i][j].value = self.backtest_board[i][j]
     
     #correct_test checks the forward and backward tests to find if they are the same 
     #if they are not the same, then there is more than one answer answer to the sudoku
     def correct_test(self): 
         for i in range(9):
             for j in range(9):
-                if self.cubes[i][j].value != self.back_cubes[i][j].value:
-                    self.cubes[i][j].cube_update(self.win, True, False)
-                    self.back_cubes[i][j].cube_update(self.win, True, False)
-                    self.cubes[i][j].draw(self.win)
-                    self.back_cubes[i][j].draw(self.win)
+                if self.test_cubes[i][j].value != self.backtest_cubes[i][j].value:
+                    self.test_cubes[i][j].cube_update(self.win, True, False)
+                    self.backtest_cubes[i][j].cube_update(self.win, True, False)
+                    self.test_cubes[i][j].draw(self.win)
+                    self.backtest_cubes[i][j].draw(self.win)
                     print("incorrect at [" + str(i) + "][" + str(j) + "]")
                     self.test_status = False
         
@@ -255,10 +263,10 @@ class Grid:
     def clear_cubes(self):
         for i in range(9):
             for j in range(9):
-                self.cubes[i][j].set(0)
-                self.cubes[i][j].temp_set(0)
-                self.back_cubes[i][j].set(0)
-                self.back_cubes[i][j].temp_set(0)
+                self.test_cubes[i][j].set(0)
+                self.test_cubes[i][j].temp_set(0)
+                self.backtest_cubes[i][j].set(0)
+                self.backtest_cubes[i][j].temp_set(0)
         self.update_test()
         self.update_backtest()
         pg.display.update()
@@ -294,12 +302,12 @@ class Grid:
         for num in numlist:
             if val_test(self.test_board, num, fill_cube):
                 self.test_board[row][col] = num
-                self.cubes[row][col].set(num)
-                self.cubes[row][col].cube_update(self.win, True)
+                self.test_cubes[row][col].set(num)
+                self.test_cubes[row][col].cube_update(self.win, True)
                 self.update_test()
                 self.backtest_board[row][col] = num
-                self.back_cubes[row][col].set(num)
-                self.back_cubes[row][col].cube_update(self.win, True)
+                self.backtest_cubes[row][col].set(num)
+                self.backtest_cubes[row][col].cube_update(self.win, True)
                 self.update_backtest()
                 pg.display.update()
                 time.sleep(0.005)
@@ -307,12 +315,12 @@ class Grid:
                     return True
                 
                 self.test_board[row][col] = 0
-                self.cubes[row][col].set(0)
-                self.cubes[row][col].cube_update(self.win, False)
+                self.test_cubes[row][col].set(0)
+                self.test_cubes[row][col].cube_update(self.win, False)
                 self.update_test()
                 self.backtest_board[row][col] = 0
-                self.back_cubes[row][col].set(0)
-                self.back_cubes[row][col].cube_update(self.win, False)
+                self.backtest_cubes[row][col].set(0)
+                self.backtest_cubes[row][col].cube_update(self.win, False)
                 self.update_backtest()
                 pg.display.update()
                 time.sleep(0.005)
@@ -504,9 +512,9 @@ def GUIrandfill(board):
     board.GUI_random_fill()    
 
 if __name__ == "__main__":
-    win = pg.display.set_mode((360,780))
+    win = pg.display.set_mode((860,620))
     pg.display.set_caption("Demo")
-    board = Grid(9,9,360,780, win, 0)
+    board = Grid(9,9,860,620, win)
     #board_backup = Grid(9,9,360,750, win, 1)
     key = None
     run = True
