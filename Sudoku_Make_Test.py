@@ -48,14 +48,13 @@ class Grid:
     forcount = 0
     bakcount = 0
 
-    def __init__(self, rows, cols, width, height, win):
-        self.rows = rows
-        self.cols = cols
-        self.cubes = [[Cube(self.demoboard[i][j], i, j, width, height, 0) for j in range(cols)] for i in range(rows)]
-        self.test_cubes = [[Cube(self.demoboard[i][j], i, j, width, height, 1) for j in range(cols)] for i in range(rows)]
-        self.backtest_cubes = [[Cube(self.demoboard[i][j], i, j, width, height, 2) for j in range(cols)] for i in range(rows)]
+    def __init__(self, width, height, win):
         self.width = width
         self.height = height
+        self.cubes = [[Cube(self.demoboard[i][j], i, j, width, height, 0) for j in range(9)] for i in range(9)]
+        self.test_cubes = [[Cube(self.demoboard[i][j], i, j, width, height, 1) for j in range(9)] for i in range(9)]
+        self.backtest_cubes = [[Cube(self.demoboard[i][j], i, j, width, height, 2) for j in range(9)] for i in range(9)]
+        
         self.play_board = None
         self.update_playboard()
         self.test_board = None
@@ -68,13 +67,17 @@ class Grid:
         self.opening_strikes = 5
     
     def update_playboard(self):
-        self.play_board = [[self.cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
+        self.play_board = [[self.cubes[i][j].value for j in range(9)] for i in range(9)]
 
     def update_test(self):
-        self.test_board = [[self.test_cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
+        self.test_board = [[self.test_cubes[i][j].value for j in range(9)] for i in range(9)]
 
     def update_backtest(self):
-        self.backtest_board = [[self.backtest_cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
+        self.backtest_board = [[self.backtest_cubes[i][j].value for j in range(9)] for i in range(9)]
+    
+    # TODO create dimensions of play and test boards in with 1:1.4 ratio, leaving gap between them with rounded of mutliples
+    def board_dimensions(self):
+        base_num = min(self.width / 2.8, self.height / 2)
 
 
     def sketch(self, value):    
@@ -86,7 +89,7 @@ class Grid:
 
     def draw(self):
         gap = self.width / 9
-        for i in range(self.rows + 1):
+        for i in range(10):
             if i % 3 == 0: 
                 thick = 4
             else:
@@ -99,8 +102,8 @@ class Grid:
             pg.draw.line(self.win, (0,0,0), (0, ((self.height - self.width) + (i*gap))), (self.width, ((self.height - self.width) + (i*gap))), thick)
             pg.draw.line(self.win, (0,0,0), (i* gap, self.height - self.width), (i*gap, self.height), thick)
     
-        for i in range(self.rows):
-            for j in range(self.cols):
+        for i in range(9):
+            for j in range(9):
                 # TODO alter CUBE draw function for playboard
                 self.test_cubes[i][j].draw(self.win)
                 self.backtest_cubes[i][j].draw(self.win)
@@ -350,7 +353,7 @@ class Grid:
 
 
 class Cube:
-    def __init__(self, value, row, col, width, height, section):
+    def __init__(self, value, row, col, width, height, cube_size, section):
         self.row = row
         self.col = col
         self.width = width
@@ -358,8 +361,8 @@ class Cube:
         self.value = value
         self.temp = 0
         self.selected = False
-        self.cube_size = width / 9
-        self.xzero = 0
+        self.cube_size = cube_size
+        self.xzero = 0 if section == 0 else 
         self.yzero = 0 if section == 0 else self.height - self.width
         self.section = section
         self.cube_status = True
@@ -503,8 +506,9 @@ def GUIrandfill(board):
 
 if __name__ == "__main__":
     win = pg.display.set_mode((860,620))
+    #Playboard  = 540 x 540, Test Boards = 300 x 300
     pg.display.set_caption("Demo")
-    board = Grid(9,9,860,620, win)
+    board = Grid(860,620, win)
     #board_backup = Grid(9,9,360,750, win, 1)
     key = None
     run = True
