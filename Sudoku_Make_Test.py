@@ -64,8 +64,6 @@ class Grid:
         self.update_backtest()
         self.selected = None    #model is used as internal demo for testing
         self.win = win
-        self.GUI_test1_fin = False
-        self.GUI_test2_fin = False
         self.test_status = None
         self.opening_strikes = 5
     
@@ -103,9 +101,10 @@ class Grid:
     
         for i in range(self.rows):
             for j in range(self.cols):
+                # TODO alter CUBE draw function for playboard
                 self.test_cubes[i][j].draw(self.win)
                 self.backtest_cubes[i][j].draw(self.win)
-        
+
         fnt = pg.font.SysFont("comic sans", 40)
         if self.test_status == True:
             text = fnt.render("VALID PUZZLE", True, (90, 150, 55))
@@ -169,12 +168,8 @@ class Grid:
                 self.test_cubes[row][col].cube_update(self.win, True)
                 self.update_test()
                 pg.display.update()
-                self.forcount+=1
-                #print("f" + str(self.forcount) + " " + str(row) + ":" + str(col) + " " + str(num))
                 time.sleep(.005)
-
                 if self.GUI_solve():
-                    #self.GUI_test1_fin = True
                     return True
 
                 self.test_board[row][col] = 0
@@ -182,12 +177,7 @@ class Grid:
                 self.update_test()
                 self.test_cubes[row][col].cube_update(self.win, False)
                 pg.display.update()
-                self.forcount+=1
-                #print("f" + str(self.forcount) + " " + str(row) + ":" + str(col) + " " + str(num))
-
                 time.sleep(.005)
-        
-        #self.GUI_test1_fin = True
         return False
 
     def GUI_back_solve(self):
