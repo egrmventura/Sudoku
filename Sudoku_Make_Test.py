@@ -30,7 +30,7 @@ class Grid:
         self.selected = None    #model is used as internal demo for testing
         self.win = win
         self.test_status = None
-        self.opening_strikes = 5
+        self.opening_strikes = 4
     
     def update_playboard(self):
         self.play_board = [[self.play_cubes[i][j].value for j in range(9)] for i in range(9)]
@@ -128,7 +128,7 @@ class Grid:
                 self.test_cubes[row][col].cube_update(self.win, True)
                 self.update_test()
                 pg.display.update()
-                time.sleep(.005)
+                time.sleep(.001)
                 if self.GUI_solve():
                     return True
 
@@ -137,7 +137,7 @@ class Grid:
                 self.update_test()
                 self.test_cubes[row][col].cube_update(self.win, False)
                 pg.display.update()
-                time.sleep(.005)
+                time.sleep(.001)
         return False
 
     def GUI_back_solve(self):
@@ -153,7 +153,7 @@ class Grid:
                 self.update_backtest()
                 pg.display.update()
                 self.bakcount+=1
-                time.sleep(.005)
+                time.sleep(.001)
                 if self.GUI_back_solve():
                     return True
 
@@ -163,11 +163,11 @@ class Grid:
                 self.backtest_cubes[row][col].cube_update(self.win, False)
                 pg.display.update()
                 self.bakcount+=1
-                time.sleep(.005)
+                time.sleep(.001)
         return False
 
     # TODO reevaluate "update_board". Either apply a variable for play vs test or create 2nd function
-    def update_board(self): #temp test for solve display
+    def update_test_cubes(self): #temp test for solve display
         for i in range(9):
             for j in range(9):
                 self.test_cubes[i][j].value = self.test_board[i][j]
@@ -221,7 +221,9 @@ class Grid:
         for i in range(9):
             for j in range(9):
                 self.test_board[i][j] = self.play_board[i][j]
+                self.test_cubes[i][j].value = self.play_board[i][j]
                 self.backtest_board[i][j] = self.play_board[i][j]
+                self.backtest_cubes[i][j].value = self.play_board[i][j]
 
     def random_fill(self):
         fill_cube = find_empty(self.play_board)
@@ -294,35 +296,93 @@ class Grid:
         return False
 
     # TODO work on operation. Update 
+    def puzzle_test_formatting(self, row1, col1, row2, col2, start = True, passed = True):
+        
+        if row1 == row2 and col1 == col2:
+            if start:
+                self.board_dup()
+                self.play_cubes[row1][col1].selected = True
+                self.test_board[row1][col1], self.backtest_board[row1][col1] = 0, 0
+                self.test_cubes[row1][col1].set(0)
+                self.backtest_cubes[row1][col1].set(0)
+                self.win.fill((255, 255, 255))
+                self.draw()
+                pg.display.update()
+            elif passed:
+                self.play_cubes[row1][col1].selected = False
+                self.play_cubes[row1][col1].set(0)
+                self.play_board[row1][col1] = 0
+                self.win.fill((255, 255, 255))
+                self.draw()
+                pg.display.update()
+            else:
+                self.play_cubes[row1][col1].selected = False
+                self.board_dup()
+                self.win.fill((255, 255, 255))
+                self.draw()
+                pg.display.update()
+        
+        else:
+            if start:
+                self.board_dup()
+                self.play_cubes[row1][col1].selected = True
+                self.test_board[row1][col1], self.backtest_board[row1][col1] = 0, 0
+                self.test_cubes[row1][col1].set(0)
+                self.backtest_cubes[row1][col1].set(0)
+                self.play_cubes[row2][col2].selected = True
+                self.test_board[row2][col2], self.backtest_board[row1][col1] = 0, 0
+                self.test_cubes[row2][col2].set(0)
+                self.backtest_cubes[row2][col2].set(0)
+                self.win.fill((255, 255, 255))
+                self.draw()
+                pg.display.update()
+            elif passed:
+                self.play_cubes[row1][col1].selected = False
+                self.play_cubes[row1][col1].set(0)
+                self.play_board[row1][col1] = 0
+                self.play_cubes[row2][col2].selected = False
+                self.play_cubes[row2][col2].set(0)
+                self.play_board[row2][col2] = 0
+                self.win.fill((255, 255, 255))
+                self.draw()
+                pg.display.update()
+            else:
+                self.play_cubes[row1][col1].selected = False
+                self.play_cubes[row2][col2].selected = False
+                self.board_dup()
+                self.win.fill((255, 255, 255))
+                self.draw()
+                pg.display.update()
+
     def GUI_make_puzzle(self): 
+        ic(self.opening_strikes)
         if self.opening_strikes <= 0:
             return True
-        for _ in range(5):
+        
+        for _ in range(max(1, self.opening_strikes)):
             
+            ic("strikes left", max(0,int(self.opening_strikes)))
             temp_val1, temp_val2 = 0, 0
             while temp_val1 == 0 and temp_val2 == 0:
                 row1, col1, row2, col2 = open_cube_coord()
                 temp_val1, temp_val2 = self.play_board[row1][col1], self.play_board[row2][col2]
             #self.play_cubes[row1][col1].cube_update(self.win, True)
             #self.play_cubes[row2][col2].cube_update(self.win, True)
-            self.board_dup()
-            self.test_board[row1][col1], self.test_board[row2][col2] = 0, 0
-            self.backtest_board[row1][col1], self.backtest_board[row2][col2] = 0, 0
+            self.puzzle_test_formatting(row1, col1, row2, col2)
             #ic(row1, col1, temp_val1, row2, col2, temp_val2)
             self.GUI_solve()
             self.GUI_back_solve()
         
             #ic(self.opening_strikes, self.test_board, self.backtest_board)
             
-            if self.correct_test():
-                self.play_board[row1][col1], self.play_board[row2][col2] = 0, 0
-                self.play_cubes[row1][col1].set(0)
-                self.play_cubes[row2][col2].set(0)
+            if self.correct_test_bool():
+                self.puzzle_test_formatting(row1, col1, row2, col2, False)
                 if self.GUI_make_puzzle():
                     return True
-            ic("Fail, repopulate")
+            
             self.opening_strikes-=1
-            self.board_dup()
+            ic("Fail, repopulate", self.opening_strikes)
+            self.puzzle_test_formatting(row1, col1, row2, col2, False, False)
         return False
             
 
@@ -543,6 +603,8 @@ if __name__ == "__main__":
                     redraw_window(win, board)
                     board.GUI_random_fill()
                     redraw_window(win, board)
+                    pg.display.update()
+                    
                     board.GUI_make_puzzle()
 
                 if event.key == pg.K_n:
