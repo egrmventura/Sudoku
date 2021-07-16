@@ -273,7 +273,7 @@ class Grid:
     def remove_opening(self): ###Not working yet.
         if self.opening_strikes <= 0:
             return True
-        for _ in range(5):
+        for _ in range(self.opening_strikes):
             row1, col1, row2, col2 = open_cube_coord()
             temp_val1, temp_val2 = self.play_board[row1][col1], self.play_board[row2][col2]
             if temp_val1 == 0 and temp_val2 ==0:
