@@ -490,6 +490,7 @@ def find_empty(board):
                 return (i, j)   #row, col of empty
 
 def val_test(board, num, pos):
+    #find if matching values in cubes within row, col, and or section and return boolean
     row = pos[0]
     col = pos[1]
     row_sect = row // 3
@@ -510,29 +511,31 @@ def val_test(board, num, pos):
     return True #passed all tests
 
 #TODO check on possible CUBE attribute to highlight matching value cells for error check
-def row_match(board, num, pos):
+def identical_cube(board, num, pos):
+    #find if matching values in cubes within row, col, and or section and return pos
     row = pos[0]
     col = pos[1]
-    for j in range(9):
-        if board[row][j] == num and j != col:
-            return [row, j]
-
-def col_match(board, num, pos):
-    row = pos[0]
-    col = pos[1]
-    for j in range(9):
-        if board[j][col] == num and j != row:
-            return [j, col]
-
-def sect_match(board, num, pos):
-    row = pos[0]
-    col = pos[1]
+    iden_pos = []
     row_sect = row // 3
     col_sect = col // 3
+    for j in range(9):
+        if board[row][j] == num and j != col:
+            iden_pos.append(row)
+            iden_pos.append(j)
+
+    for i in range(9):
+        if board[j][col] == num and i != row:
+            iden_pos.append(i)
+            iden_pos.append(col)
+
     for i in range(row_sect * 3, (row_sect * 3) + 3):
         for j in range(col_sect * 3, (col_sect * 3) +3):
             if board[i][j] == num and i != row and j != col:
-                return [i, j]
+                iden_pos.append(i)
+                iden_pos.append(j)
+
+    return iden_pos
+    
 
 # TODO set threading for simultanious appearance of GUI solve and back solve
 def GUI_output(board):
