@@ -49,7 +49,6 @@ class Grid:
         else:
             self.play_gap = math.ceil((self.width // 22) * 1.5)
             self.test_gap = math.ceil((self.width - (9 * self.play_gap))/10)
-    
 
     def sketch(self, value):    
         # TODO check into use of sketch function and whether to separate for different cube classes
@@ -92,7 +91,27 @@ class Grid:
             text = fnt.render("INVALID PUZZLE", True, (200, 45, 0))
             pg.draw.rect(self.win, (240, 160, 160), (0, self.width, self.width, self.height - (2 * self.width)))
             self.win.blit(text, ((self.width - text.get_width())/ 2, (self.height - text.get_height()) / 2))
-            
+
+    def select(self, row, col):
+        for i in range(9):
+            for j in range(9):
+                self.play_cubes[i][j].selected = False
+        
+        self.play_cubes[row][col].selected = True
+        self.selected = (row, col)
+    
+    def clear(self):
+        row, col = self.selected
+        if self.play_cubes[row][col].value == 0:
+            self.play_cubes[row][col].temp_set(0)
+
+    def click(self, pos):
+        if pos[0] < (9 * self.play_gap) and pos[1] < (9 * self.play_gap):
+            x = pos[0] // self.play_gap
+            y = pos[1] // self.play_gap
+            return (int(y), int(x))
+        else:
+            return None
     
     def solve(self, board, forward=True):
         test_cube = find_empty(board)
@@ -384,6 +403,8 @@ class Grid:
             ic("Fail, repopulate", self.opening_strikes)
             self.puzzle_test_formatting(row1, col1, row2, col2, False, False)
         return False
+    
+    
             
 
 
@@ -578,6 +599,8 @@ def board_nums(name):
     return puzzle
 
 
+
+
 if __name__ == "__main__":
     win_width = 880
     win_height = 680
@@ -597,7 +620,6 @@ if __name__ == "__main__":
                     GUI_output(board)
                 
                 if event.key == pg.K_m:
-                    # TODO remake puzzle creation GUI
                     puzzle = board_nums("clear")
                     board = Grid(win_width, win_height, win, puzzle)
                     redraw_window(win, board)
@@ -618,7 +640,38 @@ if __name__ == "__main__":
                     win.fill((255, 255, 255))
                     board = Grid(win_width, win_height, win, puzzle)
                     
+                if event.key == pg.K_1:
+                    key = 1
+                if event.key == pg.K_2:
+                    key = 2
+                if event.key == pg.K_3:
+                    key = 3
+                if event.key == pg.K_4:
+                    key = 4
+                if event.key == pg.K_5:
+                    key = 5
+                if event.key == pg.K_6:
+                    key = 6
+                if event.key == pg.K_7:
+                    key = 7
+                if event.key == pg.K_8:
+                    key = 8
+                if event.key == pg.K_9:
+                    key = 9
+                
+                #TODO setup deletion for solving inputs and puzzle creation inputs
+                if event.key == pg.K_DELETE:
+                    board.clear()
+                    key = None
+                
                 '''solve print of validity / test false match'''
+            
+            if event.type == pg.MOUSEBUTTONDOWN:
+                pos = pg.mouse.get_pos()
+                clicked = board.click(pos)
+                if clicked:
+                    board.select(clicked[0], clicked[1])
+                    key = None
 
         redraw_window(win, board)
         pg.display.flip()
