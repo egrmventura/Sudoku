@@ -509,6 +509,31 @@ def val_test(board, num, pos):
     
     return True #passed all tests
 
+#TODO check on possible CUBE attribute to highlight matching value cells for error check
+def row_match(board, num, pos):
+    row = pos[0]
+    col = pos[1]
+    for j in range(9):
+        if board[row][j] == num and j != col:
+            return [row, j]
+
+def col_match(board, num, pos):
+    row = pos[0]
+    col = pos[1]
+    for j in range(9):
+        if board[j][col] == num and j != row:
+            return [j, col]
+
+def sect_match(board, num, pos):
+    row = pos[0]
+    col = pos[1]
+    row_sect = row // 3
+    col_sect = col // 3
+    for i in range(row_sect * 3, (row_sect * 3) + 3):
+        for j in range(col_sect * 3, (col_sect * 3) +3):
+            if board[i][j] == num and i != row and j != col:
+                return [i, j]
+
 # TODO set threading for simultanious appearance of GUI solve and back solve
 def GUI_output(board):
     '''while not (find_empty(board.backtest_board) == None) and not (find_empty(board.test_board) == None):
