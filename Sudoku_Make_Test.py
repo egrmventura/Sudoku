@@ -475,9 +475,16 @@ class Cube:
             board.blit(text, (x + ((self.cube_size - text.get_width())/2), y + ((self.cube_size - text.get_height())/2)))
         else:
             #TODO 7/29 review how to edit use of self.temp for multiple possible values on perimeter for guessing
+            '''
+            Each cube will be redrawn upon a key being pressed under current format.
+            Evaluate whether isolating updates is faster or not.
+            If it is, then update each Play_Cube to draw a box over the guess number(s) or the solid number.
+            Be sure to put in the update of color for contradicting guesses or permanents.
+            Also check the validity of the booleans and values for the temp system
+            '''
             if self.value == 0 and self.temp != 0:
-                fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
-                text = fnt.render(str(self.temp), True, (128,128,128))
+                guess_fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
+                text = guess_fnt.render(str(self.temp), True, (128,128,128))
                 print_pos = self.guess_num_offset(self.temp)
                 #TODO 7/29 - test updated guessing track
                 if self.guess_vals[self.temp - 1] == 0:
@@ -534,8 +541,8 @@ def redraw_window(window, board):
     board.draw()
 
 def find_empty(board):
-    for i in range(len(board)):
-        for j in range(len(board[0])):
+    for i in range(9):
+        for j in range(9):
             if board[i][j] == 0:
                 return (i, j)   #row, col of empty
 
@@ -585,25 +592,7 @@ def identical_cube(board, num, pos):
                 iden_pos.append(j)
 
     return iden_pos
-    
 
-# TODO set threading for simultanious appearance of GUI solve and back solve
-def GUI_output(board):
-    '''while not (find_empty(board.backtest_board) == None) and not (find_empty(board.test_board) == None):
-        forward = threading.Thread(target= board.GUI_solve)
-        forward.start()
-        #forward.join()
-        #time.sleep(0.001)
-        backward = threading.Thread(target= board.GUI_back_solve)
-    
-        #forward.start()
-        backward.start()
-        forward.join()
-        backward.join()
-    '''
-    board.GUI_solve()
-    board.GUI_back_solve()
-    board.correct_test()
 
 def open_cube_coord():
     #function to randomly select 2 cubes to test at 0 for new sudoku puzzle
@@ -678,7 +667,7 @@ def board_nums(name):
 
 
 
-
+# TODO 7/29 set threading for simultanious appearance of GUI solve and back solve
 if __name__ == "__main__":
     win_width = 880
     win_height = 680
@@ -695,7 +684,9 @@ if __name__ == "__main__":
                 run = False
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
-                    GUI_output(board)
+                    board.GUI_solve()
+                    board.GUI_back_solve()
+                    board.correct_test()
                 
                 if event.key == pg.K_m:
                     puzzle = board_nums("clear")
