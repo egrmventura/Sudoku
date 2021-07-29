@@ -479,6 +479,7 @@ class Cube:
                 fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
                 text = fnt.render(str(self.temp), True, (128,128,128))
                 print_pos = self.guess_num_offset(self.temp)
+                #TODO 7/29 - test updated guessing track
                 if self.guess_vals[self.temp - 1] == 0:
                     self.guess_vals[self.temp - 1] = self.temp
                     fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
