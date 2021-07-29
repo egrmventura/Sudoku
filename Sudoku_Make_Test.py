@@ -487,7 +487,7 @@ class Cube:
                     board.blit(text, (x + print_pos[0], y + print_pos[1]))
                 else:
                     self.guess_vals[self.temp - 1] = 0
-                    pg.draw.rect(board, (255, 255, 255), (x + print_pos[0) - gap, y + print_pos[1] - gap, x + print_pos[0) + gap, y + print_pos[1] + gap)
+                    pg.draw.rect(board, (255, 255, 255), (x + print_pos[0] - gap, y + print_pos[1] - gap, x + print_pos[0] + gap, y + print_pos[1] + gap))
                 
             elif self.value != 0:
                 text = fnt.render(str(self.value), True, (0,0,0))
