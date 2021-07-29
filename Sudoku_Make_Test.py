@@ -455,6 +455,11 @@ class Cube:
         self.yzero = self.height - (9 * self.cube_size) if section == 2 else 0
         #permanent set to True when given value in puzzle
         self.permanent = False
+        #guess set to True when manually solving and final decision
+        self.guess = False
+        #TODO 7/29 set formatting in solving cubes for guess T/F and guess values On/Off
+        #guess_vals status on 1-9 for temp guess values, shown on perimeter of cube
+        self.guess_vals = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.cube_status = True
 
     def draw(self, board):
@@ -462,23 +467,40 @@ class Cube:
         
         x = self.xzero + (self.col * self.cube_size)
         y = self.yzero + (self.row * self.cube_size)
-        
+        gap = self.cube_size // 6
+
         if not self.cube_status:
             pg.draw.rect(board, (240, 160, 160), (x, y, self.cube_size, self.cube_size))
             text = fnt.render(str(self.value), 1, (200, 45, 0))
             board.blit(text, (x + ((self.cube_size - text.get_width())/2), y + ((self.cube_size - text.get_height())/2)))
         else:
+            #TODO 7/29 review how to edit use of self.temp for multiple possible values on perimeter for guessing
             if self.value == 0 and self.temp != 0:
+                fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
                 text = fnt.render(str(self.temp), True, (128,128,128))
-                board.blit(text, (x+3, y+3))
+                print_pos = self.guess_num_offset(self.temp)
+                if self.guess_vals[self.temp - 1] == 0:
+                    self.guess_vals[self.temp - 1] = self.temp
+                    fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
+                    text = fnt.render(str(self.temp), True, (128,128,128))
+                    board.blit(text, (x + print_pos[0], y + print_pos[1]))
+                else:
+                    self.guess_vals[self.temp - 1] = 0
+                    pg.draw.rect(board, (255, 255, 255), (x + print_pos[0) - gap, y + print_pos[1] - gap, x + print_pos[0) + gap, y + print_pos[1] + gap)
+                
             elif self.value != 0:
                 text = fnt.render(str(self.value), True, (0,0,0))
                 board.blit(text, (x + (self.cube_size/2 - text.get_width()/2), y + (self.cube_size/2 - text.get_height()/2)))
 
             if self.selected:
                 pg.draw.rect(board, (200, 45, 0), (x, y, self.cube_size, self.cube_size), 3)
-        
-    
+
+    def guess_num_offset(self, num):
+        gap = math.ceil(self.cube_size / 6)
+        y_sect = num % 3
+        x_sect = (num - (3 * y_sect)) 
+        return [(((2 * x_sect) - 1) * gap), (((2 * y_sect) + 1) * gap)]
+
     def cube_update(self, board, confirmed = True, correct = True):
         # :confirmed: whether or not cube value valid in backtracking algorithm
         # :correct: after test and back test fill in values for puzzle, any that do not match are False
