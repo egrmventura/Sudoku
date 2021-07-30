@@ -11,7 +11,13 @@ class Grid:
     
     forcount = 0
     bakcount = 0
-
+    #TODO 7/29 PM read below notes
+    '''
+    Current layout does not have a trigger of testing the guess input against the answer.
+    Set a hidden matrix with the solution to check when answered along with the reformatting if there are invalid guesses.
+    Set the temp_val inputs to input value if new with highlight, highlight existing if typed, remove if delete is hit, and set to full if enter is hit in guessing process (maybe actuall temp_val?)
+    Reform the program for the temp values and perm values around the 3rd note; this will have a large impact on already written code.
+    '''
     def __init__(self, width, height, win, puzzle):
         self.width = width
         self.height = height
@@ -29,6 +35,8 @@ class Grid:
         self.update_backtest()
         self.selected = None    #model is used as internal demo for testing
         self.win = win
+        #TODO 7/29 PM apply guess_status to set sketch boundaries for updates and formating with temp_val displays
+        self.guess_status = None
         self.test_status = None
         self.opening_strikes = 3
     
@@ -464,7 +472,7 @@ class Cube:
 
     def draw(self, board):
         fnt = pg.font.SysFont("comic sans", math.ceil(0.75 * self.cube_size))
-        
+        guess_fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
         x = self.xzero + (self.col * self.cube_size)
         y = self.yzero + (self.row * self.cube_size)
         gap = self.cube_size // 6
@@ -483,18 +491,17 @@ class Cube:
             Also check the validity of the booleans and values for the temp system
             '''
             if self.value == 0 and self.temp != 0:
-                guess_fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
-                text = guess_fnt.render(str(self.temp), True, (128,128,128))
-                print_pos = self.guess_num_offset(self.temp)
+                
+                print_pos = self.guess_num_offset()
                 #TODO 7/29 - test updated guessing track
                 if self.guess_vals[self.temp - 1] == 0:
                     self.guess_vals[self.temp - 1] = self.temp
-                    fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
-                    text = fnt.render(str(self.temp), True, (128,128,128))
-                    board.blit(text, (x + print_pos[0], y + print_pos[1]))
                 else:
                     self.guess_vals[self.temp - 1] = 0
-                    pg.draw.rect(board, (255, 255, 255), (x + print_pos[0] - gap, y + print_pos[1] - gap, x + print_pos[0] + gap, y + print_pos[1] + gap))
+                for i in range(9):
+                    if self.guess_vals[i] != 0:
+                        text = guess_fnt.render(str(self.guess_vals[i]), True, (128,128,128))
+                        board.blit(text, (x + print_pos[i][0], y + print_pos[i][1]))
                 
             elif self.value != 0:
                 text = fnt.render(str(self.value), True, (0,0,0))
@@ -503,11 +510,12 @@ class Cube:
             if self.selected:
                 pg.draw.rect(board, (200, 45, 0), (x, y, self.cube_size, self.cube_size), 3)
 
-    def guess_num_offset(self, num):
+    def guess_num_offset(self):
         gap = math.ceil(self.cube_size / 6)
-        y_sect = num % 3
-        x_sect = (num - (3 * y_sect)) 
-        return [(((2 * x_sect) - 1) * gap), (((2 * y_sect) + 1) * gap)]
+        offset = []
+        for i in range(9):
+            offset.append([((i % 3) * 2 + 1) * gap, ((i // 3) * 2 + 1) * gap])
+        return offset
 
     def cube_update(self, board, confirmed = True, correct = True):
         # :confirmed: whether or not cube value valid in backtracking algorithm
@@ -753,6 +761,9 @@ if __name__ == "__main__":
                 if clicked:
                     board.select(clicked[0], clicked[1])
                     key = None
+
+        if board.selected and key != None:
+            board.sketch(key)
 
         redraw_window(win, board)
         pg.display.flip()
