@@ -18,7 +18,7 @@ class Grid:
     Set the temp_val inputs to input value if new with highlight, highlight existing if typed, remove if delete is hit, and set to full if enter is hit in guessing process (maybe actuall temp_val?)
     Reform the program for the temp values and perm values around the 3rd note; this will have a large impact on already written code.
     '''
-    def __init__(self, width, height, win, puzzle):
+    def __init__(self, width, height, win, puzzle, puzzle_solving = True):
         self.width = width
         self.height = height
         self.play_gap = 0
@@ -29,11 +29,11 @@ class Grid:
         self.backtest_cubes = [[Cube(puzzle[i][j], i, j, width, height, self.test_gap, 2) for j in range(9)] for i in range(9)]
         self.play_board = None
         self.update_playboard()
-        self.test_board = None
+        self.test_board = None  #test_board is used for testing on puzzle writing and solution model on puzzle solving
         self.update_test()
         self.backtest_board = None
         self.update_backtest()
-        self.selected = None    #model is used as internal demo for testing
+        self.selected = None
         self.win = win
         #TODO 7/29 PM apply guess_status to set sketch boundaries for updates and formating with temp_val displays
         self.guess_status = None
@@ -75,6 +75,7 @@ class Grid:
             pg.draw.line(self.win, (0,0,0), (0, i * self.play_gap), (9 * self.play_gap, i * self.play_gap), thick)
             pg.draw.line(self.win, (0,0,0), (i * self.play_gap, 0), (i * self.play_gap, 9 * self.play_gap), thick)
             #test board
+            
             pg.draw.line(self.win, (0,0,0), ((self.width - (9 * self.test_gap)), i * self.test_gap), (self.width, i * self.test_gap), thick)
             pg.draw.line(self.win, (0,0,0), (self.width - ((9 - i) * self.test_gap), 0), (self.width - ((9 - i) * self.test_gap), 9 * self.test_gap), thick)
             #backtest board
@@ -247,9 +248,20 @@ class Grid:
         for i in range(9):
             for j in range(9):
                 self.test_board[i][j] = self.play_board[i][j]
+                self.backtest_board[i][j] = self.play_board[i][j]
+    
+    def board_cube_dup(self): #Duplicates test boards from play board
+        for i in range(9):
+            for j in range(9):
+                self.test_board[i][j] = self.play_board[i][j]
                 self.test_cubes[i][j].value = self.play_board[i][j]
                 self.backtest_board[i][j] = self.play_board[i][j]
                 self.backtest_cubes[i][j].value = self.play_board[i][j]
+    
+    def play_cube_dup(self):
+        for i in range(9):
+            for j in range(9):
+                self.play_cubes[i][j].value = self.play_board[i][j]
 
     def random_fill(self):
         fill_cube = find_empty(self.play_board)
@@ -260,17 +272,17 @@ class Grid:
         numlist = [1,2,3,4,5,6,7,8,9]
         random.shuffle(numlist)
         for num in numlist:
-            if val_test(self.test_board, num, fill_cube):
-                self.test_board[row][col] = num
+            if val_test(self.play_board, num, fill_cube):
+                self.play_board[row][col] = num
                 if self.random_fill():
                     return True
-                self.test_board[row][col] = 0
+                self.play_board[row][col] = 0
         return False
     
     def GUI_random_fill(self):
         fill_cube = find_empty(self.play_board)
         if not fill_cube:
-            self.board_dup()
+            self.board_cube_dup()
             pg.display.update()
             return True
         row, col = fill_cube
@@ -297,21 +309,18 @@ class Grid:
 
 
     def make_puzzle(self): 
-        #ic(self.opening_strikes)
         if self.opening_strikes <= 0:
             return True
         
         for _ in range(max(1, self.opening_strikes)):
             
-            #ic("strikes left", max(0,int(self.opening_strikes)))
             temp_val1, temp_val2 = 0, 0
             while temp_val1 == 0 and temp_val2 == 0:
                 row1, col1, row2, col2 = open_cube_coord()
                 temp_val1, temp_val2 = self.play_board[row1][col1], self.play_board[row2][col2]
             self.puzzle_test(row1, col1, row2, col2)
-            self.solve()
-            self.back_solve()
-            
+            self.solve(self.test_board)
+            self.solve(self.backtest_board, False)
             if self.correct_test_bool():
                 self.puzzle_test(row1, col1, row2, col2, False)
                 if self.make_puzzle():
@@ -382,7 +391,7 @@ class Grid:
         # :passed: passed the test, cube at 0 has only 1 solution
         if row1 == row2 and col1 == col2:
             if start:
-                self.board_dup()
+                self.board_cube_dup()
                 self.play_cubes[row1][col1].selected = True
                 self.test_board[row1][col1], self.backtest_board[row1][col1] = 0, 0
                 self.test_cubes[row1][col1].set(0)
@@ -399,14 +408,14 @@ class Grid:
                 pg.display.update()
             else:
                 self.play_cubes[row1][col1].selected = False
-                self.board_dup()
+                self.board_cube_dup()
                 self.win.fill((255, 255, 255))
                 self.draw()
                 pg.display.update()
         
         else:
             if start:
-                self.board_dup()
+                self.board_cube_dup()
                 self.play_cubes[row1][col1].selected = True
                 self.test_board[row1][col1], self.backtest_board[row1][col1] = 0, 0
                 self.test_cubes[row1][col1].set(0)
@@ -431,7 +440,7 @@ class Grid:
             else:
                 self.play_cubes[row1][col1].selected = False
                 self.play_cubes[row2][col2].selected = False
-                self.board_dup()
+                self.board_cube_dup()
                 self.win.fill((255, 255, 255))
                 self.draw()
                 pg.display.update()
@@ -475,7 +484,7 @@ class Cube:
         guess_fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
         x = self.xzero + (self.col * self.cube_size)
         y = self.yzero + (self.row * self.cube_size)
-        gap = self.cube_size // 6
+        
 
         if not self.cube_status:
             pg.draw.rect(board, (240, 160, 160), (x, y, self.cube_size, self.cube_size))
@@ -677,6 +686,7 @@ def board_nums(name):
 
 # TODO 7/29 set threading for simultanious appearance of GUI solve and back solve
 if __name__ == "__main__":
+    
     win_width = 880
     win_height = 680
     puzzle = board_nums("demoboard")
@@ -698,7 +708,7 @@ if __name__ == "__main__":
                 
                 if event.key == pg.K_m:
                     puzzle = board_nums("clear")
-                    board = Grid(win_width, win_height, win, puzzle)
+                    board = Grid(win_width, win_height, win, puzzle, False)
                     redraw_window(win, board)
                     board.GUI_random_fill()
                     redraw_window(win, board)
@@ -708,7 +718,7 @@ if __name__ == "__main__":
 
                 if event.key == pg.K_n:
                     puzzle = board_nums("clear")
-                    board = Grid(win_width, win_height, win, puzzle)
+                    board = Grid(win_width, win_height, win, puzzle, False)
                     board.set_perm()
                     redraw_window(win, board)
                     board.GUI_random_fill()
@@ -719,11 +729,14 @@ if __name__ == "__main__":
                     board = Grid(win_width, win_height, win, puzzle)
                     board.set_perm()
                 
-                #TODO run tests for operation. Malfunction 7/28
+                
                 if event.key == pg.K_p:
                     puzzle = board_nums("clear")
                     board = Grid(win_width, win_height, win, puzzle)
+                    board.random_fill()
                     board.make_puzzle()
+                    board.play_cube_dup()
+                    board.board_dup()
                     board.set_perm()
                     redraw_window(win, board)
 
