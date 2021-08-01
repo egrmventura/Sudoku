@@ -108,8 +108,9 @@ class Grid:
         self.play_cubes[row][col].selected = True
         self.selected = (row, col)
     
+    #TODO 7/31 correct board.clear function. not clearing input values. May involve value/temp_val usage
     def clear(self):
-        row, col = self.selected
+        row, col = self.selected[0], self.selected[1]
         if self.play_cubes[row][col].value == 0:
             self.play_cubes[row][col].temp_set(0)
 
