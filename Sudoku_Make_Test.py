@@ -461,8 +461,15 @@ class Cube:
         self.col = col
         self.width = width
         self.height = height
+        #TODO 8/1 track temp vs temp_val in code. Make sure temp is current selected value that can be add/removed from guess_vals or placed as guessed val
+        #TODO 8/1 value is assigned as provided value in initial code, temp was for guess with intention of just Y/N correct.
         self.value = value
         self.temp = 0
+        #guess set to guessed value when solving
+        self.guess = 0
+        #TODO 7/29 set formatting in solving cubes for guess T/F and guess values On/Off
+        #guess_vals status on 1-9 for temp guess values, shown on perimeter of cube
+        self.guess_vals = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.selected = False
         self.cube_size = cube_size
         #sections: 0 = playboard, 1 = forward testboard, 2 = backward testboard
@@ -471,13 +478,10 @@ class Cube:
         self.xzero = 0 if section == 0 else self.width - (9 * self.cube_size)
         #yzero is 9-cube offset from bottom if backward testboard, and 0 for playboard and forward testboard
         self.yzero = self.height - (9 * self.cube_size) if section == 2 else 0
+        #TODO remove self.permanent. If self.value != 0 then self.permanent is True
         #permanent set to True when given value in puzzle
         self.permanent = False
-        #guess set to True when manually solving and final decision
-        self.guess = False
-        #TODO 7/29 set formatting in solving cubes for guess T/F and guess values On/Off
-        #guess_vals status on 1-9 for temp guess values, shown on perimeter of cube
-        self.guess_vals = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        #TODO determine use of cube_status and remove if logical
         self.cube_status = True
 
     def draw(self, board):
