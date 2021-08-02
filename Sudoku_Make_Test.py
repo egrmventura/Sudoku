@@ -25,8 +25,13 @@ class Grid:
         self.test_gap = 0
         self.board_dimensions()
         self.play_cubes = [[Cube(puzzle[i][j], i, j, width, height, self.play_gap, 0) for j in range(9)] for i in range(9)]
-        self.test_cubes = [[Cube(puzzle[i][j], i, j, width, height, self.test_gap, 1) for j in range(9)] for i in range(9)]
-        self.backtest_cubes = [[Cube(puzzle[i][j], i, j, width, height, self.test_gap, 2) for j in range(9)] for i in range(9)]
+        self.puzzle_solving = puzzle_solving
+        if self.puzzle_solving:
+            self.test_cubes = [[Cube(0, i, j, width, height, self.test_gap, 1) for j in range(9)] for i in range(9)]
+            self.backtest_cubes = [[Cube(0, i, j, width, height, self.test_gap, 2) for j in range(9)] for i in range(9)]
+        else:
+            self.test_cubes = [[Cube(puzzle[i][j], i, j, width, height, self.test_gap, 1) for j in range(9)] for i in range(9)]
+            self.backtest_cubes = [[Cube(puzzle[i][j], i, j, width, height, self.test_gap, 2) for j in range(9)] for i in range(9)]
         self.play_board = None
         self.update_playboard()
         self.test_board = None  #test_board is used for testing on puzzle writing and solution model on puzzle solving
@@ -58,12 +63,48 @@ class Grid:
             self.play_gap = math.ceil((self.width // 22) * 1.5)
             self.test_gap = math.ceil((self.width - (9 * self.play_gap))/10)
 
-    def sketch(self, value):    
-        # TODO check into use of sketch function and whether to separate for different cube classes
+    def sketch(self, num, guess_change = False, set_as_guess = True):    
+        # TODO 8/1 add additional parameters for the guessing num or adding to guess array
         row, col = self.selected
-        self.play_cubes[row][col].set(value)
-        self.test_cubes[row][col].set(value)
-        self.backtest_cubes[row][col].set(value)
+        if guess_change:
+            
+            
+            self.play_cubes[row][col].guess_set(num)
+        else:
+            self.play_cubes[row][col].temp_set(num)
+        if not self.puzzle_solving:
+            self.test_cubes[row][col].temp_set(num)
+            self.backtest_cubes[row][col].temp_set(num)
+
+    # TODO 8/1 update the dup and dup_count uses througout the play_cubes
+    def identical_cube(self, num, dup):
+    #find if matching values in cubes within row, col, and or section and adapt dup status
+        row, col = self.selected
+        row_sect = row // 3
+        col_sect = col // 3
+        for j in range(9):
+            if self.play_cubes[row][j] == num and j != col:
+                
+                self.play_cubes[row][col].dup = dup
+                if not dup:
+                    self.play_cubes[row][j].dup_count -= 1
+                    if self.play_cubes[row][j].dup_count == 0:
+                        self.play_cubes[row][j].dup = dup
+                else:
+                    self.play_cubes[row][j].dup_count += 1
+                    self.play_cubes[row][j].dup = dup
+
+        for i in range(9):
+            if self.play_cubes[j][col] == num and i != row:
+                self.play_cubes[row][col].dup = True
+
+        for i in range(row_sect * 3, (row_sect * 3) + 3):
+            for j in range(col_sect * 3, (col_sect * 3) +3):
+                if board[i][j] == num and i != row and j != col:
+                    iden_pos.append([i, j])
+
+        
+
 
     def draw(self):
         for i in range(10):
@@ -156,7 +197,7 @@ class Grid:
                 self.test_cubes[row][col].cube_update(self.win, True)
                 self.update_test()
                 pg.display.update()
-                time.sleep(.001)
+                time.sleep(.00025)
                 if self.GUI_solve():
                     return True
 
@@ -165,7 +206,7 @@ class Grid:
                 self.update_test()
                 self.test_cubes[row][col].cube_update(self.win, False)
                 pg.display.update()
-                time.sleep(.001)
+                time.sleep(.00025)
         return False
 
     def GUI_back_solve(self):
@@ -181,7 +222,7 @@ class Grid:
                 self.update_backtest()
                 pg.display.update()
                 self.bakcount+=1
-                time.sleep(.001)
+                time.sleep(.00025)
                 if self.GUI_back_solve():
                     return True
 
@@ -191,7 +232,7 @@ class Grid:
                 self.backtest_cubes[row][col].cube_update(self.win, False)
                 pg.display.update()
                 self.bakcount+=1
-                time.sleep(.001)
+                time.sleep(.00025)
         return False
 
     # TODO reevaluate "update_board". Either apply a variable for play vs test or create 2nd function
@@ -227,23 +268,6 @@ class Grid:
                 if cube_removal_test_for[i][j] != cube_removal_test_back[i][j]:
                     return False
         return True
-
-    def clear_cubes(self):
-        for i in range(9):
-            for j in range(9):
-                self.play_cubes[i][j].set(0)
-                self.play_cubes[i][j].temp_set(0)
-                self.play_cubes[i][j].cube_clear(self.win)
-                self.test_cubes[i][j].set(0)
-                self.test_cubes[i][j].temp_set(0)
-                self.test_cubes[i][j].cube_clear(self.win)
-                self.backtest_cubes[i][j].set(0)
-                self.backtest_cubes[i][j].temp_set(0)
-                self.backtest_cubes[i][j].cube_clear(self.win)
-                self.update_playboard()
-                self.update_test()
-                self.update_backtest()
-                pg.display.update()
 
     def board_dup(self): #Duplicates test boards from play board
         for i in range(9):
@@ -356,15 +380,6 @@ class Grid:
             self.puzzle_test_formatting(row1, col1, row2, col2, False, False)
         return False
     
-    def set_perm(self):
-        #sets all provided numbers as permanent for solving
-        for i in range(9):
-            for j in range(9):
-                if self.play_board[i][j] != 0:
-                    self.play_cubes[i][j].permanent = True
-                else:
-                    self.play_cubes[i][j].permanent = False
-    
     def puzzle_test(self, row1, col1, row2, col2, start = True, passed = True):
         # :start: start of the test, temporarily setting to 0
         # :passed: passed the test, cube at 0 has only 1 solution
@@ -464,6 +479,7 @@ class Cube:
         #TODO 8/1 track temp vs temp_val in code. Make sure temp is current selected value that can be add/removed from guess_vals or placed as guessed val
         #TODO 8/1 value is assigned as provided value in initial code, temp was for guess with intention of just Y/N correct.
         self.value = value
+        #temp value is temporary imput that can be applied to guess_vals or as guess
         self.temp = 0
         #guess set to guessed value when solving
         self.guess = 0
@@ -474,19 +490,19 @@ class Cube:
         self.cube_size = cube_size
         #sections: 0 = playboard, 1 = forward testboard, 2 = backward testboard
         self.section = section
+        self.dup = False
+        self.dup_count = 0
         #xzero is 0 is playboard, or 9-cube offset from width if testboard
         self.xzero = 0 if section == 0 else self.width - (9 * self.cube_size)
         #yzero is 9-cube offset from bottom if backward testboard, and 0 for playboard and forward testboard
         self.yzero = self.height - (9 * self.cube_size) if section == 2 else 0
-        #TODO remove self.permanent. If self.value != 0 then self.permanent is True
-        #permanent set to True when given value in puzzle
-        self.permanent = False
+        
         #TODO determine use of cube_status and remove if logical
         self.cube_status = True
 
     def draw(self, board):
         fnt = pg.font.SysFont("comic sans", math.ceil(0.75 * self.cube_size))
-        guess_fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
+        list_fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
         x = self.xzero + (self.col * self.cube_size)
         y = self.yzero + (self.row * self.cube_size)
         
@@ -496,7 +512,7 @@ class Cube:
             text = fnt.render(str(self.value), 1, (200, 45, 0))
             board.blit(text, (x + ((self.cube_size - text.get_width())/2), y + ((self.cube_size - text.get_height())/2)))
         else:
-            #TODO 7/29 review how to edit use of self.temp for multiple possible values on perimeter for guessing
+            #TODO 8/1 add dup status
             '''
             Each cube will be redrawn upon a key being pressed under current format.
             Evaluate whether isolating updates is faster or not.
@@ -504,7 +520,24 @@ class Cube:
             Be sure to put in the update of color for contradicting guesses or permanents.
             Also check the validity of the booleans and values for the temp system
             '''
-            if self.value == 0 and self.temp != 0:
+            if self.value == 0 and self.guess != 0:
+                duplicates = identical_cube(board, self.guess, self.row, self.col)
+                if len(duplicates) == 0:
+                    text = fnt.render(str(self.guess), True, (128, 128, 128))
+                    board.blit(text, (x + ((self.cube_size - text.get_width())/2), y + ((self.cube_size - text.get_height())/2)))
+                
+                else:
+                    pg.draw.rect(board, (240, 160, 160), (x, y, self.cube_size, self.cube_size))
+                    text = fnt.render(str(self.guess), True, (128, 128, 128))
+                    board.blit(text, (x + ((self.cube_size - text.get_width())/2), y + ((self.cube_size - text.get_height())/2)))
+                    for dup in range(len(duplicates)):
+                        row, col = duplicates[dup]
+                        x = self.xzero + (row * self.cube_size)
+                        y = self.yzero + (col * self.cube_size)
+                        
+
+
+            elif self.value == 0 and self.temp != 0:
                 
                 print_pos = self.guess_num_offset()
                 #TODO 7/29 - test updated guessing track
@@ -514,7 +547,7 @@ class Cube:
                     self.guess_vals[self.temp - 1] = 0
                 for i in range(9):
                     if self.guess_vals[i] != 0:
-                        text = guess_fnt.render(str(self.guess_vals[i]), True, (128,128,128))
+                        text = list_fnt.render(str(self.guess_vals[i]), True, (128,128,128))
                         board.blit(text, (x + print_pos[i][0], y + print_pos[i][1]))
                 
             elif self.value != 0:
@@ -525,10 +558,14 @@ class Cube:
                 pg.draw.rect(board, (200, 45, 0), (x, y, self.cube_size, self.cube_size), 3)
 
     def guess_num_offset(self):
-        gap = math.ceil(self.cube_size / 6)
+        mini_cube_size = self.cube_size / 3
+        list_fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
         offset = []
         for i in range(9):
-            offset.append([((i % 3) * 2 + 1) * gap, ((i // 3) * 2 + 1) * gap])
+            text = list_fnt.render(str(i+1), True, (0,0,0))
+            row_offset = ((i % 3) * mini_cube_size) + ((mini_cube_size - text.get_width()) / 2)
+            col_offset = ((i // 3) * mini_cube_size) + ((mini_cube_size - text.get_height()) / 2)
+            offset.append([row_offset, col_offset])
         return offset
 
     def cube_update(self, board, confirmed = True, correct = True):
@@ -554,6 +591,9 @@ class Cube:
     def set(self, num):
         self.value = num
     
+    def guess_set(self, num):
+        self.guess = num
+
     def temp_set(self, num):
         self.temp_value = num
 
@@ -590,30 +630,7 @@ def val_test(board, num, pos):
     return True #passed all tests
 
 #TODO check on possible CUBE attribute to highlight matching value cells for error check
-def identical_cube(board, num, pos):
-    #find if matching values in cubes within row, col, and or section and return pos
-    row = pos[0]
-    col = pos[1]
-    iden_pos = []
-    row_sect = row // 3
-    col_sect = col // 3
-    for j in range(9):
-        if board[row][j] == num and j != col:
-            iden_pos.append(row)
-            iden_pos.append(j)
 
-    for i in range(9):
-        if board[j][col] == num and i != row:
-            iden_pos.append(i)
-            iden_pos.append(col)
-
-    for i in range(row_sect * 3, (row_sect * 3) + 3):
-        for j in range(col_sect * 3, (col_sect * 3) +3):
-            if board[i][j] == num and i != row and j != col:
-                iden_pos.append(i)
-                iden_pos.append(j)
-
-    return iden_pos
 
 
 def open_cube_coord():
@@ -698,7 +715,7 @@ if __name__ == "__main__":
     win = pg.display.set_mode((win_width, win_height))
     #Window split: Play board  = 540 x 540, Test Boards = 306 x 306 each
     pg.display.set_caption("Demo")
-    board = Grid(win_width, win_height, win, puzzle)
+    board = Grid(win_width, win_height, win, puzzle, True)
     key = None
     run = True
     while run:
@@ -719,12 +736,10 @@ if __name__ == "__main__":
                     redraw_window(win, board)
                     pg.display.update()
                     board.GUI_make_puzzle()
-                    board.set_perm()
 
                 if event.key == pg.K_n:
                     puzzle = board_nums("clear")
                     board = Grid(win_width, win_height, win, puzzle, False)
-                    board.set_perm()
                     redraw_window(win, board)
                     board.GUI_random_fill()
 
@@ -732,7 +747,6 @@ if __name__ == "__main__":
                     puzzle = board_nums("clear")
                     win.fill((255, 255, 255))
                     board = Grid(win_width, win_height, win, puzzle)
-                    board.set_perm()
                 
                 
                 if event.key == pg.K_p:
@@ -740,10 +754,8 @@ if __name__ == "__main__":
                     board = Grid(win_width, win_height, win, puzzle)
                     board.random_fill()
                     board.make_puzzle()
-                    board.play_cube_dup()
-                    board.board_dup()
-                    board.set_perm()
-                    redraw_window(win, board)
+                    puzzle = board.play_board
+                    board = Grid(win_width, win_height, win, puzzle, True)
 
 
 
