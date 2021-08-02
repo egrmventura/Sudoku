@@ -63,13 +63,16 @@ class Grid:
             self.play_gap = math.ceil((self.width // 22) * 1.5)
             self.test_gap = math.ceil((self.width - (9 * self.play_gap))/10)
 
-    def sketch(self, num, guess_change = False, set_as_guess = True):    
+    def sketch(self, num, guess_change = False, guess_bool = True):    
         # TODO 8/1 add additional parameters for the guessing num or adding to guess array
         row, col = self.selected
         if guess_change:
-            
-            
-            self.play_cubes[row][col].guess_set(num)
+            if not guess_bool:
+                num = self.play_cubes[row][col].guess
+                self.play_cubes[row][col].guess_set(0)
+            else:    
+                self.play_cubes[row][col].guess_set(num)
+            self.identical_cube(num, guess_bool)
         else:
             self.play_cubes[row][col].temp_set(num)
         if not self.puzzle_solving:
@@ -77,33 +80,34 @@ class Grid:
             self.backtest_cubes[row][col].temp_set(num)
 
     # TODO 8/1 update the dup and dup_count uses througout the play_cubes
-    def identical_cube(self, num, dup):
+    def identical_cube(self, num, guess_bool):
     #find if matching values in cubes within row, col, and or section and adapt dup status
         row, col = self.selected
         row_sect = row // 3
         col_sect = col // 3
         for j in range(9):
             if self.play_cubes[row][j] == num and j != col:
+                self.cube_dup_update(row, col, row, j, guess_bool)
                 
-                self.play_cubes[row][col].dup = dup
-                if not dup:
-                    self.play_cubes[row][j].dup_count -= 1
-                    if self.play_cubes[row][j].dup_count == 0:
-                        self.play_cubes[row][j].dup = dup
-                else:
-                    self.play_cubes[row][j].dup_count += 1
-                    self.play_cubes[row][j].dup = dup
-
         for i in range(9):
-            if self.play_cubes[j][col] == num and i != row:
-                self.play_cubes[row][col].dup = True
-
+            if self.play_cubes[i][col] == num and i != row:
+                self.cube_dup_update(row, col, i, col, guess_bool)
+                
         for i in range(row_sect * 3, (row_sect * 3) + 3):
             for j in range(col_sect * 3, (col_sect * 3) +3):
                 if board[i][j] == num and i != row and j != col:
-                    iden_pos.append([i, j])
+                    self.cube_dup_update(row, col, i, j, guess_bool)
 
-        
+    def cube_dup_update(self, row1, col1, row2, col2, guess_bool):
+        self.play_cubes[row1][col1].dup = guess_bool
+        if not guess_bool:
+            self.play_cubes[row2][col2].dup_count -= 1
+            if self.play_cubes[row2][col2].dup_count == 0:
+                self.play_cubes[row2][col2].dup = False
+        else:
+            self.play_cubes[row2][col2].dup_count += 1
+            self.play_cubes[row2][col2].dup = True
+
 
 
     def draw(self):
@@ -496,9 +500,7 @@ class Cube:
         self.xzero = 0 if section == 0 else self.width - (9 * self.cube_size)
         #yzero is 9-cube offset from bottom if backward testboard, and 0 for playboard and forward testboard
         self.yzero = self.height - (9 * self.cube_size) if section == 2 else 0
-        
-        #TODO determine use of cube_status and remove if logical
-        self.cube_status = True
+
 
     def draw(self, board):
         fnt = pg.font.SysFont("comic sans", math.ceil(0.75 * self.cube_size))
@@ -507,55 +509,43 @@ class Cube:
         y = self.yzero + (self.row * self.cube_size)
         
 
-        if not self.cube_status:
-            pg.draw.rect(board, (240, 160, 160), (x, y, self.cube_size, self.cube_size))
-            text = fnt.render(str(self.value), 1, (200, 45, 0))
+    
+        #TODO 8/1 add dup status
+        '''
+        Each cube will be redrawn upon a key being pressed under current format.
+        Evaluate whether isolating updates is faster or not.
+        If it is, then update each Play_Cube to draw a box over the guess number(s) or the solid number.
+        Be sure to put in the update of color for contradicting guesses or permanents.
+        Also check the validity of the booleans and values for the temp system
+        '''
+        if self.value == 0 and self.guess != 0:
+            if self.dup:
+                # TODO 8/2 figure out how to lay down rectangle within grid lines
+                pg.draw.rect(board, (240, 160, 160), (x, y, self.cube_size, self.cube_size))
+            text = fnt.render(str(self.guess), True, (128, 128, 128))
             board.blit(text, (x + ((self.cube_size - text.get_width())/2), y + ((self.cube_size - text.get_height())/2)))
-        else:
-            #TODO 8/1 add dup status
-            '''
-            Each cube will be redrawn upon a key being pressed under current format.
-            Evaluate whether isolating updates is faster or not.
-            If it is, then update each Play_Cube to draw a box over the guess number(s) or the solid number.
-            Be sure to put in the update of color for contradicting guesses or permanents.
-            Also check the validity of the booleans and values for the temp system
-            '''
-            if self.value == 0 and self.guess != 0:
-                duplicates = identical_cube(board, self.guess, self.row, self.col)
-                if len(duplicates) == 0:
-                    text = fnt.render(str(self.guess), True, (128, 128, 128))
-                    board.blit(text, (x + ((self.cube_size - text.get_width())/2), y + ((self.cube_size - text.get_height())/2)))
-                
-                else:
-                    pg.draw.rect(board, (240, 160, 160), (x, y, self.cube_size, self.cube_size))
-                    text = fnt.render(str(self.guess), True, (128, 128, 128))
-                    board.blit(text, (x + ((self.cube_size - text.get_width())/2), y + ((self.cube_size - text.get_height())/2)))
-                    for dup in range(len(duplicates)):
-                        row, col = duplicates[dup]
-                        x = self.xzero + (row * self.cube_size)
-                        y = self.yzero + (col * self.cube_size)
-                        
+            
+        elif self.value == 0 and self.temp != 0:
+            
+            print_pos = self.guess_num_offset()
+            #TODO 7/29 - test updated guessing track
+            if self.guess_vals[self.temp - 1] == 0:
+                self.guess_vals[self.temp - 1] = self.temp
+            else:
+                self.guess_vals[self.temp - 1] = 0
+            for i in range(9):
+                if self.guess_vals[i] != 0:
+                    text = list_fnt.render(str(self.guess_vals[i]), True, (128,128,128))
+                    board.blit(text, (x + print_pos[i][0], y + print_pos[i][1]))
+            
+        elif self.value != 0:
+            if self.dup:
+                pg.draw.rect(board, (240, 160, 160), (x, y, self.cube_size, self.cube_size))
+            text = fnt.render(str(self.value), True, (0,0,0))
+            board.blit(text, (x + (self.cube_size/2 - text.get_width()/2), y + (self.cube_size/2 - text.get_height()/2)))
 
-
-            elif self.value == 0 and self.temp != 0:
-                
-                print_pos = self.guess_num_offset()
-                #TODO 7/29 - test updated guessing track
-                if self.guess_vals[self.temp - 1] == 0:
-                    self.guess_vals[self.temp - 1] = self.temp
-                else:
-                    self.guess_vals[self.temp - 1] = 0
-                for i in range(9):
-                    if self.guess_vals[i] != 0:
-                        text = list_fnt.render(str(self.guess_vals[i]), True, (128,128,128))
-                        board.blit(text, (x + print_pos[i][0], y + print_pos[i][1]))
-                
-            elif self.value != 0:
-                text = fnt.render(str(self.value), True, (0,0,0))
-                board.blit(text, (x + (self.cube_size/2 - text.get_width()/2), y + (self.cube_size/2 - text.get_height()/2)))
-
-            if self.selected:
-                pg.draw.rect(board, (200, 45, 0), (x, y, self.cube_size, self.cube_size), 3)
+        if self.selected:
+            pg.draw.rect(board, (200, 45, 0), (x, y, self.cube_size, self.cube_size), 3)
 
     def guess_num_offset(self):
         mini_cube_size = self.cube_size / 3
@@ -718,6 +708,7 @@ if __name__ == "__main__":
     board = Grid(win_width, win_height, win, puzzle, True)
     key = None
     run = True
+    guess_bool = False
     while run:
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -757,7 +748,8 @@ if __name__ == "__main__":
                     puzzle = board.play_board
                     board = Grid(win_width, win_height, win, puzzle, True)
 
-
+                if event.key == pg.K_RETURN:
+                    guess_bool = True
 
                 if event.key == pg.K_1:
                     key = 1
@@ -793,7 +785,8 @@ if __name__ == "__main__":
                     key = None
 
         if board.selected and key != None:
-            board.sketch(key)
+            board.sketch(key, True, guess_bool)
+            guess_bool = False
 
         redraw_window(win, board)
         pg.display.flip()
