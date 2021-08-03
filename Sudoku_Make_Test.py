@@ -44,6 +44,7 @@ class Grid:
         self.guess_status = None
         self.test_status = None
         self.opening_strikes = 3
+        self.sketch_highlight = [0, 0]
     
     def update_playboard(self):
         self.play_board = [[self.play_cubes[i][j].value for j in range(9)] for i in range(9)]
@@ -62,40 +63,50 @@ class Grid:
         else:
             self.play_gap = math.ceil((self.width // 22) * 1.5)
             self.test_gap = math.ceil((self.width - (9 * self.play_gap))/10)
-
-    def sketch(self, num, guess_change = False, guess_bool = True):    
-        # TODO 8/1 add additional parameters for the guessing num or adding to guess array
+    # TODO 8/2 work on setting active values that can be added or removed from temp or guess
+    def sketch(self, num, guess = False, demote = False):    
+        
         row, col = self.selected
-        if guess_change:
-            if not guess_bool:
-                num = self.play_cubes[row][col].guess
-                self.play_cubes[row][col].guess_set(0)
-            else:    
-                self.play_cubes[row][col].guess_set(num)
-            self.identical_cube(num, guess_bool)
+        if self.sketch_highlight != [row, col]:
+            self.play_cubes[self.sketch_highlight[0]][self.sketch_highlight[1]].guess[9] = 0
+            self.sketch_highlight = [row, col]
+        if guess:
+            if self.play_cubes[row][col].guess[num-1] != 0:
+                self.play_cubes[row][col].temp_set(num)
+                self.identical_cube(num, guess)
+                ic(row, col, num, self.play_cubes[row][col].temp)
+        elif demote:
+            if self.play_cubes[row][col].temp == 0:
+                self.play_cubes[row][col].guess_set(num, False)
+            else:
+                num = self.play_cubes[row][col].temp
+                self.play_cubes[row][col].temp_set(0)
+                self.identical_cube(num, guess)
+                
         else:
-            self.play_cubes[row][col].temp_set(num)
+            self.play_cubes[row][col].guess_set(num, True)
+            
         if not self.puzzle_solving:
             self.test_cubes[row][col].temp_set(num)
             self.backtest_cubes[row][col].temp_set(num)
 
-    # TODO 8/1 update the dup and dup_count uses througout the play_cubes
+    
     def identical_cube(self, num, guess_bool):
     #find if matching values in cubes within row, col, and or section and adapt dup status
         row, col = self.selected
         row_sect = row // 3
         col_sect = col // 3
         for j in range(9):
-            if self.play_cubes[row][j] == num and j != col:
+            if (self.play_cubes[row][j].value == num or self.play_cubes[row][j].temp == num) and j != col:
                 self.cube_dup_update(row, col, row, j, guess_bool)
                 
         for i in range(9):
-            if self.play_cubes[i][col] == num and i != row:
+            if (self.play_cubes[i][col].value == num or self.play_cubes[i][col].temp == num) and i != row:
                 self.cube_dup_update(row, col, i, col, guess_bool)
                 
         for i in range(row_sect * 3, (row_sect * 3) + 3):
             for j in range(col_sect * 3, (col_sect * 3) +3):
-                if board[i][j] == num and i != row and j != col:
+                if (self.play_cubes[i][j].value == num or self.play_cubes[i][j].temp == num) and i != row and j != col:
                     self.cube_dup_update(row, col, i, j, guess_bool)
 
     def cube_dup_update(self, row1, col1, row2, col2, guess_bool):
@@ -111,28 +122,44 @@ class Grid:
 
 
     def draw(self):
-        for i in range(10):
-            if i % 3 == 0: 
-                thick = 4
-            else:
-                thick = 1
-            #play board - first: horizontal, second: vertical
-            pg.draw.line(self.win, (0,0,0), (0, i * self.play_gap), (9 * self.play_gap, i * self.play_gap), thick)
-            pg.draw.line(self.win, (0,0,0), (i * self.play_gap, 0), (i * self.play_gap, 9 * self.play_gap), thick)
-            #test board
-            
-            pg.draw.line(self.win, (0,0,0), ((self.width - (9 * self.test_gap)), i * self.test_gap), (self.width, i * self.test_gap), thick)
-            pg.draw.line(self.win, (0,0,0), (self.width - ((9 - i) * self.test_gap), 0), (self.width - ((9 - i) * self.test_gap), 9 * self.test_gap), thick)
-            #backtest board
-            pg.draw.line(self.win, (0,0,0), (self.width - (9 * self.test_gap), self.height - ((9 - i) * self.test_gap)), (self.width, self.height - ((9 - i) * self.test_gap)), thick)
-            pg.draw.line(self.win, (0,0,0), (self.width - ((9 - i) * self.test_gap), self.height - (9 * self.test_gap)), (self.width - ((9 - i) * self.test_gap), self.height), thick)
-    
-        for i in range(9):
-            for j in range(9):
-                self.play_cubes[i][j].draw(self.win)
-                self.test_cubes[i][j].draw(self.win)
-                self.backtest_cubes[i][j].draw(self.win)
+        if self.puzzle_solving:
+            for i in range(9):
+                for j in range(9):
+                    self.play_cubes[i][j].draw(self.win)
 
+            for i in range(10):
+                if i % 3 == 0: 
+                    thick = 4
+                else:
+                    thick = 1
+                #play board - first: horizontal, second: vertical
+                pg.draw.line(self.win, (0,0,0), (0, i * self.play_gap), (9 * self.play_gap, i * self.play_gap), thick)
+                pg.draw.line(self.win, (0,0,0), (i * self.play_gap, 0), (i * self.play_gap, 9 * self.play_gap), thick)
+                
+        else:
+            for i in range(9):
+                for j in range(9):
+                    self.play_cubes[i][j].draw(self.win)
+                    self.test_cubes[i][j].draw(self.win)
+                    self.backtest_cubes[i][j].draw(self.win)
+
+            for i in range(10):
+                if i % 3 == 0: 
+                    thick = 4
+                else:
+                    thick = 1
+                #play board - first: horizontal, second: vertical
+                pg.draw.line(self.win, (0,0,0), (0, i * self.play_gap), (9 * self.play_gap, i * self.play_gap), thick)
+                pg.draw.line(self.win, (0,0,0), (i * self.play_gap, 0), (i * self.play_gap, 9 * self.play_gap), thick)
+                #test board
+                
+                pg.draw.line(self.win, (0,0,0), ((self.width - (9 * self.test_gap)), i * self.test_gap), (self.width, i * self.test_gap), thick)
+                pg.draw.line(self.win, (0,0,0), (self.width - ((9 - i) * self.test_gap), 0), (self.width - ((9 - i) * self.test_gap), 9 * self.test_gap), thick)
+                #backtest board
+                pg.draw.line(self.win, (0,0,0), (self.width - (9 * self.test_gap), self.height - ((9 - i) * self.test_gap)), (self.width, self.height - ((9 - i) * self.test_gap)), thick)
+                pg.draw.line(self.win, (0,0,0), (self.width - ((9 - i) * self.test_gap), self.height - (9 * self.test_gap)), (self.width - ((9 - i) * self.test_gap), self.height), thick)
+        
+        
         # TODO alter Valid/Invalid status style and location
         fnt = pg.font.SysFont("comic sans", 40)
         if self.test_status == True:
@@ -483,13 +510,11 @@ class Cube:
         #TODO 8/1 track temp vs temp_val in code. Make sure temp is current selected value that can be add/removed from guess_vals or placed as guessed val
         #TODO 8/1 value is assigned as provided value in initial code, temp was for guess with intention of just Y/N correct.
         self.value = value
-        #temp value is temporary imput that can be applied to guess_vals or as guess
+        
         self.temp = 0
-        #guess set to guessed value when solving
-        self.guess = 0
         #TODO 7/29 set formatting in solving cubes for guess T/F and guess values On/Off
-        #guess_vals status on 1-9 for temp guess values, shown on perimeter of cube
-        self.guess_vals = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        #guess status on 1-9 for temp guess values, shown on perimeter of cube
+        self.guess = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.selected = False
         self.cube_size = cube_size
         #sections: 0 = playboard, 1 = forward testboard, 2 = backward testboard
@@ -503,8 +528,9 @@ class Cube:
 
 
     def draw(self, board):
+        
         fnt = pg.font.SysFont("comic sans", math.ceil(0.75 * self.cube_size))
-        list_fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
+        list_fnt = pg.font.SysFont("comic sans", math.ceil(0.3 * self.cube_size))
         x = self.xzero + (self.col * self.cube_size)
         y = self.yzero + (self.row * self.cube_size)
         
@@ -518,24 +544,23 @@ class Cube:
         Be sure to put in the update of color for contradicting guesses or permanents.
         Also check the validity of the booleans and values for the temp system
         '''
-        if self.value == 0 and self.guess != 0:
+
+        if self.value == 0 and self.temp != 0:
             if self.dup:
-                # TODO 8/2 figure out how to lay down rectangle within grid lines
                 pg.draw.rect(board, (240, 160, 160), (x, y, self.cube_size, self.cube_size))
-            text = fnt.render(str(self.guess), True, (128, 128, 128))
+            text = fnt.render(str(self.temp), True, (128, 128, 128))
             board.blit(text, (x + ((self.cube_size - text.get_width())/2), y + ((self.cube_size - text.get_height())/2)))
             
-        elif self.value == 0 and self.temp != 0:
+        elif self.value == 0 and self.temp == 0:
             
             print_pos = self.guess_num_offset()
-            #TODO 7/29 - test updated guessing track
-            if self.guess_vals[self.temp - 1] == 0:
-                self.guess_vals[self.temp - 1] = self.temp
-            else:
-                self.guess_vals[self.temp - 1] = 0
+            guess_val = self.guess[9]
             for i in range(9):
-                if self.guess_vals[i] != 0:
-                    text = list_fnt.render(str(self.guess_vals[i]), True, (128,128,128))
+                if self.guess[i] != 0:
+                    if self.guess[i] == guess_val:
+                        text = list_fnt.render(str(self.guess[i]), True, (240,160,160))
+                    else:
+                        text = list_fnt.render(str(self.guess[i]), True, (128,128,128))
                     board.blit(text, (x + print_pos[i][0], y + print_pos[i][1]))
             
         elif self.value != 0:
@@ -581,11 +606,15 @@ class Cube:
     def set(self, num):
         self.value = num
     
-    def guess_set(self, num):
-        self.guess = num
+    def guess_set(self, num, add_val):
+        if add_val:
+            self.guess[num - 1] = num
+            self.guess[9] = num
+        else:
+            self.guess[num - 1] = 0
 
     def temp_set(self, num):
-        self.temp_value = num
+        self.temp = num
 
 
 def redraw_window(window, board):
@@ -708,7 +737,8 @@ if __name__ == "__main__":
     board = Grid(win_width, win_height, win, puzzle, True)
     key = None
     run = True
-    guess_bool = False
+    guess = False
+    demote = False
     while run:
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -748,8 +778,10 @@ if __name__ == "__main__":
                     puzzle = board.play_board
                     board = Grid(win_width, win_height, win, puzzle, True)
 
-                if event.key == pg.K_RETURN:
-                    guess_bool = True
+                if event.key == pg.K_KP_ENTER or event.key == pg.K_RETURN:
+                    guess = True
+                if event.key == pg.K_BACKSPACE:
+                    demote = True
 
                 if event.key == pg.K_1:
                     key = 1
@@ -770,10 +802,8 @@ if __name__ == "__main__":
                 if event.key == pg.K_9:
                     key = 9
                 
-                #TODO setup deletion for solving inputs and puzzle creation inputs
-                if event.key == pg.K_DELETE:
-                    board.clear()
-                    key = None
+                #TODO 8/2 setup deletion for puzzle creation inputs
+                
                 
                 '''solve print of validity / test false match'''
             
@@ -785,8 +815,14 @@ if __name__ == "__main__":
                     key = None
 
         if board.selected and key != None:
-            board.sketch(key, True, guess_bool)
-            guess_bool = False
+            temp = key
+            board.sketch(temp, guess, demote)
+            key = None
+        if board.selected and (guess or demote):
+            board.sketch(temp, guess, demote)
+            guess = False
+            demote = False
+            
 
         redraw_window(win, board)
         pg.display.flip()
