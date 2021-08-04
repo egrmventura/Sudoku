@@ -44,7 +44,7 @@ class Grid:
         self.guess_status = None
         self.test_status = None
         self.opening_strikes = 3
-        self.sketch_highlight = [0, 0]
+        self.sketch_highlight = [9, 9]
     
     def update_playboard(self):
         self.play_board = [[self.play_cubes[i][j].value for j in range(9)] for i in range(9)]
@@ -68,22 +68,38 @@ class Grid:
         
         row, col = self.selected
         if self.sketch_highlight != [row, col]:
-            self.play_cubes[self.sketch_highlight[0]][self.sketch_highlight[1]].guess[9] = 0
+            if self.sketch_highlight != [9,9]:
+                self.play_cubes[self.sketch_highlight[0]][self.sketch_highlight[1]].guess[9] = 0
             self.sketch_highlight = [row, col]
         if guess:
-            if self.play_cubes[row][col].guess[num-1] != 0:
-                self.play_cubes[row][col].temp_set(num)
-                self.identical_cube(num, guess)
-                ic(row, col, num, self.play_cubes[row][col].temp)
-        elif demote:
-            if self.play_cubes[row][col].temp == 0:
-                self.play_cubes[row][col].guess_set(num, False)
+            if self.puzzle_solving:
+                if self.play_cubes[row][col].guess[num-1] != 0:
+                    self.play_cubes[row][col].temp_set(num)
+                    self.identical_cube(num, guess)
             else:
-                num = self.play_cubes[row][col].temp
-                self.play_cubes[row][col].temp_set(0)
-                self.identical_cube(num, guess)
-                
-        else:
+                if self.play_cubes[row][col].temp != 0:
+                    num = self.play_cubes[row][col].temp
+                    self.play_cubes[row][col].set(num)
+                    self.play_cubes[row][col].temp_set(0)
+                    self.test_cubes[row][col].set(num)
+                    self.backtest_cubes[row][col].set(num)
+
+        elif demote:
+            if self.puzzle_solving:
+                if self.play_cubes[row][col].temp == 0:
+                    self.play_cubes[row][col].guess_set(num, False)
+                else:
+                    num = self.play_cubes[row][col].temp
+                    self.play_cubes[row][col].temp_set(0)
+                    self.play_cubes[row][col].guess[9] = num
+                    self.identical_cube(num, guess)       
+            else:
+                if self.play_cubes[row][col].value != 0:
+                    self.play_cubes[row][col].temp_set(self.play_cubes[row][col].value)
+                    self.play_cubes[row][col].set(0)
+                    self.test_cubes[row][col].set(0)
+                    self.backtest_cubes[row][col].set(0)
+        elif self.play_cubes[row][col].temp == 0:
             self.play_cubes[row][col].guess_set(num, True)
             
         if not self.puzzle_solving:
@@ -530,7 +546,7 @@ class Cube:
     def draw(self, board):
         
         fnt = pg.font.SysFont("comic sans", math.ceil(0.75 * self.cube_size))
-        list_fnt = pg.font.SysFont("comic sans", math.ceil(0.3 * self.cube_size))
+        list_fnt = pg.font.SysFont("comic sans", math.ceil(0.4 * self.cube_size))
         x = self.xzero + (self.col * self.cube_size)
         y = self.yzero + (self.row * self.cube_size)
         
@@ -574,7 +590,7 @@ class Cube:
 
     def guess_num_offset(self):
         mini_cube_size = self.cube_size / 3
-        list_fnt = pg.font.SysFont("comic sans", math.ceil(0.2 * self.cube_size))
+        list_fnt = pg.font.SysFont("comic sans", math.ceil(0.4 * self.cube_size))
         offset = []
         for i in range(9):
             text = list_fnt.render(str(i+1), True, (0,0,0))
@@ -733,7 +749,7 @@ if __name__ == "__main__":
     puzzle = board_nums("demoboard")
     win = pg.display.set_mode((win_width, win_height))
     #Window split: Play board  = 540 x 540, Test Boards = 306 x 306 each
-    pg.display.set_caption("Demo")
+    pg.display.set_caption("SUDOKU")
     board = Grid(win_width, win_height, win, puzzle, True)
     key = None
     run = True
@@ -745,10 +761,11 @@ if __name__ == "__main__":
                 run = False
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
-                    board.GUI_solve()
-                    board.GUI_back_solve()
-                    board.correct_test()
-                
+                    if not board.puzzle_solving:
+                        board.GUI_solve()
+                        board.GUI_back_solve()
+                        board.correct_test()
+                    
                 if event.key == pg.K_m:
                     puzzle = board_nums("clear")
                     board = Grid(win_width, win_height, win, puzzle, False)
@@ -757,12 +774,21 @@ if __name__ == "__main__":
                     redraw_window(win, board)
                     pg.display.update()
                     board.GUI_make_puzzle()
+                    
+                    
 
                 if event.key == pg.K_n:
                     puzzle = board_nums("clear")
                     board = Grid(win_width, win_height, win, puzzle, False)
                     redraw_window(win, board)
                     board.GUI_random_fill()
+                    temp = 0
+                #TODO 8/3 get test key up and running
+                if event.key == pg.K_t:
+                    if not board.puzzle_solving:
+                        board.GUI_solve()
+                        board.GUI_back_solve()
+
 
                 if event.key == pg.K_r:
                     puzzle = board_nums("clear")
