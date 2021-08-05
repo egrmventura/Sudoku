@@ -299,7 +299,6 @@ class Grid:
                     self.backtest_cubes[i][j].cube_update(self.win, True, False)
                     self.test_cubes[i][j].draw(self.win)
                     self.backtest_cubes[i][j].draw(self.win)
-                    print("incorrect at [" + str(i) + "][" + str(j) + "]")
                     self.test_status = False
         
         if not (self.test_status == False):
@@ -785,9 +784,18 @@ if __name__ == "__main__":
                     temp = 0
                 #TODO 8/3 get test key up and running
                 if event.key == pg.K_t:
+                    ic("testing", board.puzzle_solving)
                     if not board.puzzle_solving:
+                        fnt = pg.font.SysFont("comic sans", math.ceil(0.75 * board.play_gap))
+                        board.update_test()
+                        board.update_backtest()
                         board.GUI_solve()
                         board.GUI_back_solve()
+                        if board.correct_test_bool():
+                            text = fnt.render("VALID PUZZLE", 1, (90, 150, 55))
+                        else:
+                            text = fnt.render("INVALID PUZZLE", 1, (240, 160, 160))    
+                        board.blit(text, ((((2 * win_width) - (9 * board.test_gap) - text.get_width()) / 2), (win_height / 2)))
 
 
                 if event.key == pg.K_r:
