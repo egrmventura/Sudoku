@@ -181,12 +181,12 @@ class Grid:
         if self.test_status == True:
             text = fnt.render("VALID PUZZLE", True, (90, 150, 55))
             pg.draw.rect(self.win, (190, 220, 170), (0, self.width, self.width, self.height - (2 * self.width)))
-            self.win.blit(text, ((self.width - text.get_width())/ 2, (self.height - text.get_height()) / 2))
+            self.win.blit(text, ((((2 * win_width) - (9 * board.test_gap) - text.get_width()) / 2), ((win_height - text.get_height()) / 2)))
             
         elif self.test_status == False:
             text = fnt.render("INVALID PUZZLE", True, (200, 45, 0))
             pg.draw.rect(self.win, (240, 160, 160), (0, self.width, self.width, self.height - (2 * self.width)))
-            self.win.blit(text, ((self.width - text.get_width())/ 2, (self.height - text.get_height()) / 2))
+            self.win.blit(text, ((((2 * win_width) - (9 * board.test_gap) - text.get_width()) / 2), ((win_height - text.get_height()) / 2)))
 
     def select(self, row, col):
         for i in range(9):
@@ -283,11 +283,12 @@ class Grid:
         return False
 
     # TODO reevaluate "update_board". Either apply a variable for play vs test or create 2nd function
-    def update_test_cubes(self): #temp test for solve display
-        for i in range(9):
-            for j in range(9):
-                self.test_cubes[i][j].value = self.test_board[i][j]
-                self.backtest_cubes[i][j].value = self.backtest_board[i][j]
+    def reset_tests(self): #temp test for solve display
+        for row in range(9):
+            for col in range(9):
+                if self.play_cubes[row][col].value == 0:
+                    self.test_cubes[row][col].set(0)
+                    self.backtest_cubes[row][col].set(0)
     
     #correct_test checks the forward and backward tests to find if they are the same 
     #if they are not the same, then there is more than one answer answer to the sudoku
@@ -378,6 +379,10 @@ class Grid:
                 time.sleep(0.005)
         return False
 
+    def convert_to_puzzle(self, scratch = False):
+        for row in range(9):
+            for col in range(9):
+                self.play_cubes[row][col].temp_set(0)
 
     def make_puzzle(self): 
         if self.opening_strikes <= 0:
@@ -784,7 +789,7 @@ if __name__ == "__main__":
                     temp = 0
                 #TODO 8/3 get test key up and running
                 if event.key == pg.K_t:
-                    ic("testing", board.puzzle_solving)
+                    
                     if not board.puzzle_solving:
                         fnt = pg.font.SysFont("comic sans", math.ceil(0.75 * board.play_gap))
                         board.update_test()
@@ -792,11 +797,15 @@ if __name__ == "__main__":
                         board.GUI_solve()
                         board.GUI_back_solve()
                         if board.correct_test_bool():
-                            text = fnt.render("VALID PUZZLE", 1, (90, 150, 55))
+                            board.test_status = True
                         else:
-                            text = fnt.render("INVALID PUZZLE", 1, (240, 160, 160))    
-                        board.blit(text, ((((2 * win_width) - (9 * board.test_gap) - text.get_width()) / 2), (win_height / 2)))
+                            board.test_status = False
+                        board.reset_tests()
 
+                if event.key == pg.K_s:
+                    board.convert_to_puzzle()
+                    board.test_status = None
+                    board.puzzle_solving = True
 
                 if event.key == pg.K_r:
                     puzzle = board_nums("clear")
@@ -814,8 +823,10 @@ if __name__ == "__main__":
 
                 if event.key == pg.K_KP_ENTER or event.key == pg.K_RETURN:
                     guess = True
+                    board.test_status = None
                 if event.key == pg.K_BACKSPACE:
                     demote = True
+                    board.test_status = None
 
                 if event.key == pg.K_1:
                     key = 1
