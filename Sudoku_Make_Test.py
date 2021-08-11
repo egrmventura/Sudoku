@@ -113,6 +113,7 @@ class Grid:
             self.backtest_cubes[row][col].temp_set(num)
 
     def only_guess(self, row, col):
+        #if only one number is on the guess array, that will enter as the temp if guess = True
         og = []
         for i in range(9):
             if self.play_cubes[row][col].guess[i] != 0:
@@ -149,7 +150,7 @@ class Grid:
         else:
             self.play_cubes[row2][col2].dup_count += 1
             self.play_cubes[row2][col2].dup = True
-
+        self.play_cubes[row2][col2].draw(win)
 
 
     def draw(self):
@@ -254,12 +255,16 @@ class Grid:
         row, col = test_cube
         for num in range(1, 10):
             if val_test(self.play_board, num, test_cube):
+                if self.play_cubes[row][col].dup:
+                    ic(board.play_cubes[row][col].temp, row, col)
+                    board.identical_cube(self.play_cubes[row][col].temp, False)
                 self.play_board[row][col] = num
                 self.play_cubes[row][col].set(num)
                 self.play_cubes[row][col].cube_update(self.win, True)
                 self.update_test()
                 pg.display.update()
-                time.sleep(.00025)
+                time.sleep(.00005)
+                #time.sleep(.00025)
                 if self.GUI_play_solve():
                     return True
 
@@ -268,7 +273,8 @@ class Grid:
                 self.update_test()
                 self.play_cubes[row][col].cube_update(self.win, False)
                 pg.display.update()
-                time.sleep(.00025)
+                time.sleep(.00005)
+                #time.sleep(.00025)
         return False
 
     def GUI_solve(self):
@@ -368,11 +374,6 @@ class Grid:
                 self.test_cubes[i][j].value = self.play_board[i][j]
                 self.backtest_board[i][j] = self.play_board[i][j]
                 self.backtest_cubes[i][j].value = self.play_board[i][j]
-    
-    def play_cube_dup(self):
-        for i in range(9):
-            for j in range(9):
-                self.play_cubes[i][j].value = self.play_board[i][j]
 
     def random_fill(self):
         fill_cube = find_empty(self.play_board)
@@ -595,17 +596,6 @@ class Cube:
         list_fnt = pg.font.SysFont("comic sans", math.ceil(0.4 * self.cube_size))
         x = self.xzero + (self.col * self.cube_size)
         y = self.yzero + (self.row * self.cube_size)
-        
-
-    
-        #TODO 8/1 add dup status
-        '''
-        Each cube will be redrawn upon a key being pressed under current format.
-        Evaluate whether isolating updates is faster or not.
-        If it is, then update each Play_Cube to draw a box over the guess number(s) or the solid number.
-        Be sure to put in the update of color for contradicting guesses or permanents.
-        Also check the validity of the booleans and values for the temp system
-        '''
 
         if self.value == 0 and self.temp != 0:
             if self.dup:
@@ -807,6 +797,7 @@ if __name__ == "__main__":
                 run = False
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
+                    # TODO 8/11 is the space bar solve function needed in puzzle writing?
                     if not board.puzzle_solving:
                         board.GUI_solve()
                         board.GUI_back_solve()
@@ -892,7 +883,14 @@ if __name__ == "__main__":
                 if event.key == pg.K_9 or event.key == pg.K_KP9:
                     key = 9
                 
-                #TODO 8/2 setup deletion for puzzle creation inputs
+                if event.key == pg.K_UP:
+                    board.select(board.selected[0] - 1, board.selected[1])
+                if event.key == pg.K_DOWN:
+                    board.select(board.selected[0] + 1, board.selected[1])
+                if event.key == pg.K_LEFT:
+                    board.select(board.selected[0], board.selected[1] - 1)
+                if event.key == pg.K_RIGHT:
+                    board.select(board.selected[0], board.selected[1] + 1)
                 
                 
                 '''solve print of validity / test false match'''
