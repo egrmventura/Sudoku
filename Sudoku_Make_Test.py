@@ -668,6 +668,14 @@ class Cube:
     def temp_set(self, num):
         self.temp = num
 
+class Button:
+    def __init__(self, x_center, y_center, win, dim_unit, function):
+        self.x_center = x_center
+        self.y_center = y_center
+        self.win = win
+        self.dim_unit = dim_unit
+        self.function = function
+
 
 def redraw_window(window, board):
     window.fill((255,255,255))
