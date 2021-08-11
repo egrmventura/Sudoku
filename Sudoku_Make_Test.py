@@ -76,6 +76,12 @@ class Grid:
                 if self.play_cubes[row][col].guess[num-1] != 0:
                     self.play_cubes[row][col].temp_set(num)
                     self.identical_cube(num, guess)
+                else:
+                    guess_num = self.only_guess(row, col)
+                    if guess_num != 0:
+                        num = guess_num
+                        self.play_cubes[row][col].temp_set(num)
+                        self.identical_cube(num, guess)
             else:
                 if self.play_cubes[row][col].temp != 0:
                     num = self.play_cubes[row][col].temp
@@ -106,7 +112,16 @@ class Grid:
             self.test_cubes[row][col].temp_set(num)
             self.backtest_cubes[row][col].temp_set(num)
 
-    
+    def only_guess(self, row, col):
+        og = []
+        for i in range(9):
+            if self.play_cubes[row][col].guess[i] != 0:
+                og.append(i+1)
+        if len(og) == 1:
+            return og[0]
+        else:
+            return 0
+
     def identical_cube(self, num, guess_bool):
     #find if matching values in cubes within row, col, and or section and adapt dup status
         row, col = self.selected
@@ -230,6 +245,30 @@ class Grid:
                         return True
                     board[row][col] = 0
 
+        return False
+
+    def GUI_play_solve(self):
+        test_cube = find_empty(self.play_board)
+        if not test_cube:
+            return True
+        row, col = test_cube
+        for num in range(1, 10):
+            if val_test(self.play_board, num, test_cube):
+                self.play_board[row][col] = num
+                self.play_cubes[row][col].set(num)
+                self.play_cubes[row][col].cube_update(self.win, True)
+                self.update_test()
+                pg.display.update()
+                time.sleep(.00025)
+                if self.GUI_play_solve():
+                    return True
+
+                self.play_board[row][col] = 0
+                self.play_cubes[row][col].set(0)
+                self.update_test()
+                self.play_cubes[row][col].cube_update(self.win, False)
+                pg.display.update()
+                time.sleep(.00025)
         return False
 
     def GUI_solve(self):
@@ -379,10 +418,16 @@ class Grid:
                 time.sleep(0.005)
         return False
 
-    def convert_to_puzzle(self, scratch = False):
+    def convert_to_puzzle(self, from_blank = False):
         for row in range(9):
             for col in range(9):
-                self.play_cubes[row][col].temp_set(0)
+                if not from_blank:
+                    self.play_cubes[row][col].temp_set(0)
+                else:
+                    self.play_cubes[row][col].set(self.play_cubes[row][col].temp)
+                    self.play_cubes[row][col].temp_set(0)
+                    self.play_cubes[row][col].guess = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.update_playboard()
 
     def make_puzzle(self): 
         if self.opening_strikes <= 0:
@@ -407,13 +452,10 @@ class Grid:
         return False
 
     def GUI_make_puzzle(self): 
-        #ic(self.opening_strikes)
         if self.opening_strikes <= 0:
             return True
         
         for _ in range(max(1, self.opening_strikes)):
-            
-            #ic("strikes left", max(0,int(self.opening_strikes)))
             temp_val1, temp_val2 = 0, 0
             while temp_val1 == 0 and temp_val2 == 0:
                 row1, col1, row2, col2 = open_cube_coord()
@@ -769,6 +811,8 @@ if __name__ == "__main__":
                         board.GUI_solve()
                         board.GUI_back_solve()
                         board.correct_test()
+                    else:
+                        board.GUI_play_solve()
                     
                 if event.key == pg.K_m:
                     puzzle = board_nums("clear")
@@ -778,8 +822,6 @@ if __name__ == "__main__":
                     redraw_window(win, board)
                     pg.display.update()
                     board.GUI_make_puzzle()
-                    
-                    
 
                 if event.key == pg.K_n:
                     puzzle = board_nums("clear")
@@ -803,7 +845,10 @@ if __name__ == "__main__":
                         board.reset_tests()
 
                 if event.key == pg.K_s:
-                    board.convert_to_puzzle()
+                    if not find_empty(board.play_board):
+                        board.convert_to_puzzle()
+                    else:
+                        board.convert_to_puzzle(True)
                     board.test_status = None
                     board.puzzle_solving = True
 
@@ -828,23 +873,23 @@ if __name__ == "__main__":
                     demote = True
                     board.test_status = None
 
-                if event.key == pg.K_1:
+                if event.key == pg.K_1 or event.key == pg.K_KP1:
                     key = 1
-                if event.key == pg.K_2:
+                if event.key == pg.K_2 or event.key == pg.K_KP2:
                     key = 2
-                if event.key == pg.K_3:
+                if event.key == pg.K_3 or event.key == pg.K_KP3:
                     key = 3
-                if event.key == pg.K_4:
+                if event.key == pg.K_4 or event.key == pg.K_KP4:
                     key = 4
-                if event.key == pg.K_5:
+                if event.key == pg.K_5 or event.key == pg.K_KP5:
                     key = 5
-                if event.key == pg.K_6:
+                if event.key == pg.K_6 or event.key == pg.K_KP6:
                     key = 6
-                if event.key == pg.K_7:
+                if event.key == pg.K_7 or event.key == pg.K_KP7:
                     key = 7
-                if event.key == pg.K_8:
+                if event.key == pg.K_8 or event.key == pg.K_KP8:
                     key = 8
-                if event.key == pg.K_9:
+                if event.key == pg.K_9 or event.key == pg.K_KP9:
                     key = 9
                 
                 #TODO 8/2 setup deletion for puzzle creation inputs
