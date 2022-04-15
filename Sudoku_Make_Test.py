@@ -871,7 +871,7 @@ if __name__ == "__main__":
                 if event.key == pg.K_KP_ENTER or event.key == pg.K_RETURN:
                     guess = True
                     board.test_status = None
-                if event.key == pg.K_BACKSPACE:
+                if event.key == pg.K_BACKSPACE or event.key == pg.K_DELETE:
                     demote = True
                     board.test_status = None
 
